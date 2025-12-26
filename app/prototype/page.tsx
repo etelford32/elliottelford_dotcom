@@ -2,6 +2,10 @@ import { PageWrapper } from "@/components/layout/PageWrapper";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { PerformanceMonitor } from "@/components/prototype/PerformanceMonitor";
+import { ResponsiveTester } from "@/components/prototype/ResponsiveTester";
+import { AnimationTester } from "@/components/prototype/AnimationTester";
+import { ComponentPlayground } from "@/components/prototype/ComponentPlayground";
 
 export const metadata = {
   title: "Prototype & Development Page",
@@ -86,31 +90,53 @@ export default function PrototypePage() {
           </Card>
         </div>
 
-        {/* Performance Metrics */}
-        <Card className="mb-16">
-          <h3 className="text-2xl font-bold text-accent mb-4">Performance Metrics</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-accent">-</div>
-              <p className="text-sm text-foreground/70">Lighthouse Score</p>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-accent">-</div>
-              <p className="text-sm text-foreground/70">Build Time</p>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-accent">-</div>
-              <p className="text-sm text-foreground/70">Bundle Size</p>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-accent">-</div>
-              <p className="text-sm text-foreground/70">TTI (Time to Interactive)</p>
-            </div>
+        {/* Advanced Testing Tools */}
+        <div className="mb-16">
+          <h2 className="text-3xl font-bold text-accent mb-6 text-center">
+            Advanced Testing Tools
+          </h2>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <PerformanceMonitor />
+            <ResponsiveTester />
           </div>
-          <p className="text-xs text-foreground/50 mt-4 text-center">
-            Run performance tests to populate metrics
-          </p>
-        </Card>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <AnimationTester />
+            <Card>
+              <h3 className="text-xl font-bold text-accent mb-4">Quick Stats</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center p-3 bg-background/30 rounded">
+                  <div className="text-2xl font-bold text-accent">-</div>
+                  <p className="text-xs text-foreground/70">Lighthouse</p>
+                </div>
+                <div className="text-center p-3 bg-background/30 rounded">
+                  <div className="text-2xl font-bold text-accent">-</div>
+                  <p className="text-xs text-foreground/70">Bundle Size</p>
+                </div>
+                <div className="text-center p-3 bg-background/30 rounded">
+                  <div className="text-2xl font-bold text-accent">-</div>
+                  <p className="text-xs text-foreground/70">Build Time</p>
+                </div>
+                <div className="text-center p-3 bg-background/30 rounded">
+                  <div className="text-2xl font-bold text-accent">-</div>
+                  <p className="text-xs text-foreground/70">TTI</p>
+                </div>
+              </div>
+              <p className="text-xs text-foreground/50 mt-4">
+                Run Lighthouse to populate
+              </p>
+            </Card>
+          </div>
+        </div>
+
+        {/* Component Playground */}
+        <div className="mb-16">
+          <h2 className="text-3xl font-bold text-accent mb-6 text-center">
+            Interactive Component Playground
+          </h2>
+          <ComponentPlayground />
+        </div>
 
         {/* Test Scenarios */}
         <div className="mb-16">
