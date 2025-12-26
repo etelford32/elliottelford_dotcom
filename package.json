@@ -5,8 +5,15 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:preview": "NEXT_PUBLIC_ENVIRONMENT=preview next build",
+    "build:production": "NEXT_PUBLIC_ENVIRONMENT=production next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "lint:fix": "eslint --fix",
+    "type-check": "tsc --noEmit",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "analyze": "ANALYZE=true next build",
+    "preview": "next build && next start"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",
