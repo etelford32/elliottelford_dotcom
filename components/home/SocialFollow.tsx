@@ -79,10 +79,23 @@ export const SocialFollow: React.FC = () => {
                 initial={{ opacity: 0, scale: 0 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
-                whileHover={{ scale: 1.2, rotate: 5 }}
-                whileTap={{ scale: 0.9 }}
-                className={`p-4 bg-card-bg border border-accent/30 rounded-lg text-foreground/70 transition-all ${platform.color}`}
+                transition={{
+                  duration: 0.4,
+                  delay: index * 0.1,
+                  type: 'spring',
+                  bounce: 0.6
+                }}
+                whileHover={{
+                  scale: 1.3,
+                  rotate: [0, -5, 5, 0],
+                  boxShadow: '0 0 20px rgba(100, 255, 218, 0.4)',
+                  transition: { duration: 0.3 }
+                }}
+                whileTap={{
+                  scale: 0.85,
+                  rotate: -10
+                }}
+                className={`p-4 bg-card-bg border border-accent/30 rounded-lg text-foreground/70 transition-all hover:border-accent/60 ${platform.color}`}
                 aria-label={`Follow on ${platform.name}`}
               >
                 {platform.icon}

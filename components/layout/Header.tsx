@@ -33,12 +33,22 @@ export const Header: React.FC = () => {
       >
         <nav className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            {/* Logo */}
+            {/* Logo with PRO Badge */}
             <Link
               href="/"
-              className="text-xl font-bold text-accent hover:text-[#52e8c4] transition-colors"
+              className="flex items-center gap-2 group"
             >
-              {SITE_NAME}
+              <span className="text-xl font-bold text-accent hover:text-[#52e8c4] transition-colors">
+                {SITE_NAME}
+              </span>
+              <span className="relative">
+                {/* Animated gradient border */}
+                <span className="absolute inset-0 bg-gradient-to-r from-accent via-secondary to-accent bg-[length:200%_100%] animate-[shimmer_3s_linear_infinite] rounded-full blur-sm opacity-75" />
+                {/* PRO Badge */}
+                <span className="relative inline-block px-2 py-0.5 text-[10px] font-bold tracking-wider bg-gradient-to-r from-accent to-secondary text-primary rounded-full border border-accent/50 group-hover:scale-110 transition-transform">
+                  PRO
+                </span>
+              </span>
             </Link>
 
             {/* Desktop Navigation */}

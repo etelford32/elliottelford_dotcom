@@ -3,6 +3,7 @@ import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { DevBanner } from "@/components/layout/DevBanner";
+import { ScrollProgress } from "@/components/layout/ScrollProgress";
 import { SITE_NAME, SITE_DESCRIPTION, SITE_URL } from "@/lib/constants";
 
 export const metadata: Metadata = {
@@ -52,6 +53,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth">
       <body className="antialiased">
+        <ScrollProgress />
         <DevBanner />
         <Header />
         <main className="min-h-screen">

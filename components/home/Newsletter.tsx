@@ -40,11 +40,21 @@ export const Newsletter: React.FC = () => {
             <div className="relative z-10 text-center p-8 md:p-12">
               {/* Icon */}
               <motion.div
-                initial={{ scale: 0 }}
-                whileInView={{ scale: 1 }}
+                initial={{ scale: 0, rotate: -180 }}
+                whileInView={{ scale: 1, rotate: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                className="text-6xl mb-6"
+                transition={{
+                  duration: 0.8,
+                  delay: 0.2,
+                  type: 'spring',
+                  bounce: 0.5
+                }}
+                whileHover={{
+                  scale: 1.2,
+                  rotate: [0, -10, 10, -10, 0],
+                  transition: { duration: 0.5 }
+                }}
+                className="text-6xl mb-6 cursor-pointer"
               >
                 🚀
               </motion.div>

@@ -69,7 +69,12 @@ export const PillarCards: React.FC = () => {
                 className="h-full group relative overflow-hidden"
               >
                 {/* Gradient Background */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${pillar.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+                <div className={`absolute inset-0 bg-gradient-to-br ${pillar.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+
+                {/* Animated border */}
+                <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-accent/50 via-secondary/50 to-accent/50 blur-sm" style={{ margin: '-2px' }} />
+                </div>
 
                 {/* Content */}
                 <div className="relative z-10">
