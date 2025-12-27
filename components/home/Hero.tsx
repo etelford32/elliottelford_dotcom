@@ -16,65 +16,84 @@ export const Hero: React.FC = () => {
       <ShootingStars />
 
       {/* Content */}
-      <div className="container mx-auto px-4 py-20 relative z-10">
+      <div className="container mx-auto px-6 lg:px-8 py-32 lg:py-40 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="text-center max-w-4xl mx-auto"
+          className="text-center max-w-6xl mx-auto space-y-8"
         >
-          {/* Greeting */}
-          <motion.p
+          {/* Greeting Box */}
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2, duration: 0.8 }}
-            className="text-accent text-lg md:text-xl mb-4 font-mono"
+            className="inline-block"
           >
-            Hi, I'm
-          </motion.p>
+            <div className="px-6 py-3 bg-accent/10 backdrop-blur-sm border border-accent/30 rounded-xl">
+              <p className="text-accent text-lg md:text-xl font-mono">
+                Hi, I'm
+              </p>
+            </div>
+          </motion.div>
 
-          {/* Name */}
-          <motion.h1
+          {/* Name Box */}
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.8 }}
-            className="text-5xl md:text-7xl lg:text-8xl font-bold text-foreground mb-4"
+            className="inline-block"
           >
-            Elliot Telford
-          </motion.h1>
+            <div className="px-10 py-6 bg-primary/40 backdrop-blur-md border border-accent/20 rounded-2xl shadow-2xl">
+              <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-foreground">
+                Elliot Telford
+              </h1>
+            </div>
+          </motion.div>
 
-          {/* Tagline */}
-          <motion.h2
+          {/* Tagline Box */}
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6, duration: 0.8 }}
-            className="text-3xl md:text-5xl lg:text-6xl font-bold text-foreground/70 mb-8"
+            className="max-w-5xl mx-auto"
           >
-            Building the Future Through{' '}
-            <span className="text-accent">Code & Physics</span>
-          </motion.h2>
+            <div className="px-8 py-6 bg-gradient-to-r from-accent/5 via-secondary/5 to-accent/5 backdrop-blur-sm border border-accent/20 rounded-2xl">
+              <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold text-foreground/90 leading-relaxed">
+                Building the Future Through{' '}
+                <span className="text-accent">Code & Physics</span>
+              </h2>
+            </div>
+          </motion.div>
 
-          {/* Description */}
-          <motion.p
+          {/* Description Box */}
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8, duration: 0.8 }}
-            className="text-lg md:text-xl text-foreground/60 mb-4 max-w-2xl mx-auto leading-relaxed"
+            className="max-w-3xl mx-auto"
           >
-            Game Developer | Computational Astrophysicist | Systems Engineer
-          </motion.p>
+            <div className="px-8 py-4 bg-primary/30 backdrop-blur-sm border border-accent/20 rounded-xl">
+              <p className="text-lg md:text-xl text-foreground/80 leading-relaxed">
+                Game Developer | Computational Astrophysicist | Systems Engineer
+              </p>
+            </div>
+          </motion.div>
 
-          {/* Mission Statement with Glow Effect */}
+          {/* Mission Statement with Enhanced Box */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 1.0, duration: 0.8 }}
-            className="relative mb-12 max-w-3xl mx-auto"
+            className="relative max-w-4xl mx-auto"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-accent/20 via-secondary/20 to-accent/20 blur-2xl opacity-50" />
-            <p className="relative text-base md:text-lg text-accent/80 border border-accent/30 rounded-lg px-6 py-4 backdrop-blur-sm">
-              Applying science and technology for humanity's optimization as a resilient, <span className="text-accent font-semibold">interstellar species</span>
-            </p>
+            <div className="absolute inset-0 bg-gradient-to-r from-accent/20 via-secondary/20 to-accent/20 blur-3xl opacity-60" />
+            <div className="relative bg-primary/60 backdrop-blur-md border border-accent/30 rounded-2xl px-10 py-8 shadow-2xl">
+              <p className="text-lg md:text-xl lg:text-2xl text-foreground/90 leading-relaxed">
+                Applying science and technology for humanity's optimization as a resilient,{' '}
+                <span className="text-accent font-semibold">interstellar species</span>
+              </p>
+            </div>
           </motion.div>
 
           {/* CTAs */}
@@ -82,7 +101,7 @@ export const Hero: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.2, duration: 0.8 }}
-            className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+            className="flex flex-col sm:flex-row gap-6 justify-center items-center pt-8"
           >
             <Button href="/simulations" variant="primary" size="lg">
               🌌 Explore Simulations

@@ -47,26 +47,34 @@ const featuredItems = [
 
 export const FeaturedWork: React.FC = () => {
   return (
-    <section className="py-20 relative">
-      <div className="container mx-auto px-4">
+    <section className="py-24 lg:py-32 relative">
+      <div className="container mx-auto px-6 lg:px-8">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="text-center mb-20"
         >
-          <h2 className="text-4xl md:text-5xl font-bold text-accent mb-4">
-            Featured Work
-          </h2>
-          <p className="text-lg text-foreground/70 max-w-2xl mx-auto">
-            A selection of interactive simulations and projects at the intersection of physics and code
-          </p>
+          <div className="inline-block mb-6">
+            <div className="px-8 py-4 bg-accent/10 backdrop-blur-sm border border-accent/30 rounded-2xl">
+              <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-accent">
+                Featured Work
+              </h2>
+            </div>
+          </div>
+          <div className="max-w-3xl mx-auto">
+            <div className="px-8 py-5 bg-primary/40 backdrop-blur-sm border border-accent/20 rounded-xl">
+              <p className="text-lg md:text-xl text-foreground/80 leading-relaxed">
+                A selection of interactive simulations and projects at the intersection of physics and code
+              </p>
+            </div>
+          </div>
         </motion.div>
 
         {/* Featured Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-12 mb-16">
           {featuredItems.map((item, index) => (
             <motion.div
               key={item.id}

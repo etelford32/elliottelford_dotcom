@@ -25,34 +25,34 @@ export const Header: React.FC = () => {
     <>
       <header
         className={cn(
-          "fixed top-0 left-0 right-0 z-40 transition-all duration-300",
+          "fixed top-0 left-0 right-0 z-40 transition-all duration-500",
           isScrolled
-            ? "bg-primary/95 backdrop-blur-md shadow-lg border-b border-accent/20"
+            ? "bg-primary/98 backdrop-blur-xl shadow-2xl border-b border-accent/30"
             : "bg-transparent"
         )}
       >
-        <nav className="container mx-auto px-4 py-4">
+        <nav className="container mx-auto px-6 lg:px-8 py-6 lg:py-8">
           <div className="flex items-center justify-between">
             {/* Logo with PRO Badge */}
             <Link
               href="/"
-              className="flex items-center gap-2 group"
+              className="flex items-center gap-3 group"
             >
-              <span className="text-xl font-bold text-accent hover:text-[#52e8c4] transition-colors">
+              <span className="text-2xl lg:text-3xl font-bold text-accent hover:text-[#52e8c4] transition-colors">
                 {SITE_NAME}
               </span>
               <span className="relative">
                 {/* Animated gradient border */}
                 <span className="absolute inset-0 bg-gradient-to-r from-accent via-secondary to-accent bg-[length:200%_100%] animate-[shimmer_3s_linear_infinite] rounded-full blur-sm opacity-75" />
                 {/* PRO Badge */}
-                <span className="relative inline-block px-2 py-0.5 text-[10px] font-bold tracking-wider bg-gradient-to-r from-accent to-secondary text-primary rounded-full border border-accent/50 group-hover:scale-110 transition-transform">
+                <span className="relative inline-block px-3 py-1 text-xs font-bold tracking-wider bg-gradient-to-r from-accent to-secondary text-primary rounded-full border border-accent/50 group-hover:scale-110 transition-transform">
                   PRO
                 </span>
               </span>
             </Link>
 
             {/* Desktop Navigation */}
-            <ul className="hidden md:flex items-center space-x-8">
+            <ul className="hidden lg:flex items-center gap-3">
               {NAVIGATION_LINKS.map((link) => {
                 const isActive = pathname === link.href ||
                   (link.href !== '/' && pathname?.startsWith(link.href));
@@ -62,11 +62,15 @@ export const Header: React.FC = () => {
                     <Link
                       href={link.href}
                       className={cn(
-                        "text-sm font-medium transition-colors hover:text-accent",
-                        isActive ? "text-accent" : "text-foreground"
+                        "relative px-6 py-3 text-base font-medium transition-all duration-300 rounded-lg group overflow-hidden",
+                        isActive
+                          ? "text-accent bg-accent/10 border border-accent/30"
+                          : "text-foreground/80 hover:text-accent hover:bg-accent/5 border border-transparent hover:border-accent/20"
                       )}
                     >
-                      {link.name}
+                      {/* Hover glow effect */}
+                      <span className="absolute inset-0 bg-gradient-to-r from-accent/0 via-accent/10 to-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                      <span className="relative">{link.name}</span>
                     </Link>
                   </li>
                 );
@@ -75,7 +79,7 @@ export const Header: React.FC = () => {
 
             {/* Mobile Menu Button */}
             <button
-              className="md:hidden text-foreground hover:text-accent transition-colors"
+              className="lg:hidden p-3 text-foreground hover:text-accent transition-colors rounded-lg hover:bg-accent/10 border border-transparent hover:border-accent/30"
               onClick={() => setIsMobileMenuOpen(true)}
               aria-label="Open menu"
             >
@@ -104,7 +108,7 @@ export const Header: React.FC = () => {
       />
 
       {/* Spacer to prevent content from going under fixed header */}
-      <div className="h-16" />
+      <div className="h-24 lg:h-32" />
     </>
   );
 };

@@ -21,23 +21,23 @@ export const Newsletter: React.FC = () => {
   };
 
   return (
-    <section className="py-20 relative overflow-hidden">
+    <section className="py-24 lg:py-32 relative overflow-hidden">
       {/* Gradient Background */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-accent/5 to-transparent" />
 
-      <div className="container mx-auto px-4 relative z-10">
+      <div className="container mx-auto px-6 lg:px-8 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="max-w-4xl mx-auto"
+          className="max-w-5xl mx-auto"
         >
           <Card className="relative overflow-hidden">
             {/* Animated border glow */}
             <div className="absolute inset-0 bg-gradient-to-r from-accent/20 via-secondary/20 to-accent/20 opacity-50" />
 
-            <div className="relative z-10 text-center p-8 md:p-12">
+            <div className="relative z-10 text-center p-10 md:p-16 lg:p-20">
               {/* Icon */}
               <motion.div
                 initial={{ scale: 0, rotate: -180 }}
@@ -54,21 +54,29 @@ export const Newsletter: React.FC = () => {
                   rotate: [0, -10, 10, -10, 0],
                   transition: { duration: 0.5 }
                 }}
-                className="text-6xl mb-6 cursor-pointer"
+                className="text-7xl md:text-8xl mb-8 cursor-pointer"
               >
                 🚀
               </motion.div>
 
               {/* Title */}
-              <h2 className="text-3xl md:text-4xl font-bold text-accent mb-4">
-                Join the Journey
-              </h2>
+              <div className="inline-block mb-8">
+                <div className="px-8 py-4 bg-accent/10 backdrop-blur-sm border border-accent/30 rounded-2xl">
+                  <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-accent">
+                    Join the Journey
+                  </h2>
+                </div>
+              </div>
 
               {/* Description */}
-              <p className="text-lg text-foreground/70 mb-8 max-w-2xl mx-auto">
-                Get updates on new simulations, game development progress, and insights at the intersection of physics and code.
-                No spam, just space science and engineering.
-              </p>
+              <div className="max-w-2xl mx-auto mb-12">
+                <div className="px-8 py-6 bg-primary/30 backdrop-blur-sm border border-accent/20 rounded-xl">
+                  <p className="text-lg md:text-xl text-foreground/80 leading-relaxed">
+                    Get updates on new simulations, game development progress, and insights at the intersection of physics and code.
+                    No spam, just space science and engineering.
+                  </p>
+                </div>
+              </div>
 
               {/* Newsletter Form */}
               <form onSubmit={handleSubmit} className="max-w-md mx-auto mb-8">

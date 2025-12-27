@@ -49,27 +49,35 @@ const socialPlatforms = [
 
 export const SocialFollow: React.FC = () => {
   return (
-    <section className="py-16 relative">
-      <div className="container mx-auto px-4">
+    <section className="py-24 lg:py-32 relative">
+      <div className="container mx-auto px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center max-w-3xl mx-auto"
+          className="text-center max-w-4xl mx-auto"
         >
           {/* Title */}
-          <h2 className="text-3xl md:text-4xl font-bold text-accent mb-4">
-            Let's Connect
-          </h2>
+          <div className="inline-block mb-8">
+            <div className="px-8 py-4 bg-accent/10 backdrop-blur-sm border border-accent/30 rounded-2xl">
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-accent">
+                Let's Connect
+              </h2>
+            </div>
+          </div>
 
           {/* Description */}
-          <p className="text-foreground/70 mb-8">
-            Follow along for updates on space simulations, game development, and the future of interstellar exploration
-          </p>
+          <div className="max-w-2xl mx-auto mb-12">
+            <div className="px-8 py-5 bg-primary/30 backdrop-blur-sm border border-accent/20 rounded-xl">
+              <p className="text-lg md:text-xl text-foreground/80 leading-relaxed">
+                Follow along for updates on space simulations, game development, and the future of interstellar exploration
+              </p>
+            </div>
+          </div>
 
           {/* Social Icons */}
-          <div className="flex justify-center items-center gap-6">
+          <div className="flex justify-center items-center gap-8 mb-16">
             {socialPlatforms.map((platform, index) => (
               <motion.a
                 key={platform.name}
@@ -104,11 +112,13 @@ export const SocialFollow: React.FC = () => {
           </div>
 
           {/* Divider */}
-          <div className="mt-12 flex items-center justify-center gap-4">
+          <div className="flex items-center justify-center gap-6">
             <div className="h-px flex-1 bg-gradient-to-r from-transparent via-accent/30 to-transparent" />
-            <span className="text-xs text-foreground/50 uppercase tracking-wider">
-              Building Humanity's Interstellar Future
-            </span>
+            <div className="px-6 py-3 bg-primary/40 backdrop-blur-sm border border-accent/20 rounded-xl">
+              <span className="text-sm md:text-base text-foreground/70 uppercase tracking-wider font-medium">
+                Building Humanity's Interstellar Future
+              </span>
+            </div>
             <div className="h-px flex-1 bg-gradient-to-r from-transparent via-accent/30 to-transparent" />
           </div>
         </motion.div>

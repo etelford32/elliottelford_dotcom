@@ -45,26 +45,34 @@ const categoryColors: Record<string, 'accent' | 'secondary' | 'default'> = {
 
 export const RecentPosts: React.FC = () => {
   return (
-    <section className="py-20 relative bg-card-bg/20">
-      <div className="container mx-auto px-4">
+    <section className="py-24 lg:py-32 relative bg-card-bg/20">
+      <div className="container mx-auto px-6 lg:px-8">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="text-center mb-20"
         >
-          <h2 className="text-4xl md:text-5xl font-bold text-accent mb-4">
-            Recent Writing
-          </h2>
-          <p className="text-lg text-foreground/70 max-w-2xl mx-auto">
-            Thoughts on game development, astrophysics, and the intersection of code and physics
-          </p>
+          <div className="inline-block mb-6">
+            <div className="px-8 py-4 bg-accent/10 backdrop-blur-sm border border-accent/30 rounded-2xl">
+              <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-accent">
+                Recent Writing
+              </h2>
+            </div>
+          </div>
+          <div className="max-w-3xl mx-auto">
+            <div className="px-8 py-5 bg-primary/40 backdrop-blur-sm border border-accent/20 rounded-xl">
+              <p className="text-lg md:text-xl text-foreground/80 leading-relaxed">
+                Thoughts on game development, astrophysics, and the intersection of code and physics
+              </p>
+            </div>
+          </div>
         </motion.div>
 
         {/* Posts Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-12 mb-16">
           {recentPosts.map((post, index) => (
             <motion.div
               key={post.id}
