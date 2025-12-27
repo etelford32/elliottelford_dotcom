@@ -55,30 +55,39 @@ export const Hero: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8, duration: 0.8 }}
-            className="text-lg md:text-xl text-foreground/60 mb-12 max-w-2xl mx-auto leading-relaxed"
+            className="text-lg md:text-xl text-foreground/60 mb-4 max-w-2xl mx-auto leading-relaxed"
           >
             Game Developer | Computational Astrophysicist | Systems Engineer
-            <br />
-            <span className="text-base md:text-lg mt-2 block">
-              Applying science and technology for humanity's optimization as a resilient, interstellar species
-            </span>
           </motion.p>
+
+          {/* Mission Statement with Glow Effect */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 1.0, duration: 0.8 }}
+            className="relative mb-12 max-w-3xl mx-auto"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-accent/20 via-secondary/20 to-accent/20 blur-2xl opacity-50" />
+            <p className="relative text-base md:text-lg text-accent/80 border border-accent/30 rounded-lg px-6 py-4 backdrop-blur-sm">
+              Applying science and technology for humanity's optimization as a resilient, <span className="text-accent font-semibold">interstellar species</span>
+            </p>
+          </motion.div>
 
           {/* CTAs */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.0, duration: 0.8 }}
+            transition={{ delay: 1.2, duration: 0.8 }}
             className="flex flex-col sm:flex-row gap-4 justify-center items-center"
           >
             <Button href="/simulations" variant="primary" size="lg">
-              Explore Simulations
+              🌌 Explore Simulations
             </Button>
             <Button href="/game" variant="secondary" size="lg">
-              View Game
+              🎮 View Game
             </Button>
             <Button href="/contact" variant="ghost" size="lg">
-              Get In Touch
+              💬 Get In Touch
             </Button>
           </motion.div>
 
