@@ -2,9 +2,26 @@
  * Site-wide constants and configuration
  */
 
+// Core Site Information
 export const SITE_NAME = "Elliot Telford";
 export const SITE_DESCRIPTION = "Building the future through code & physics. Space RTS games, interactive astrophysics simulations, and systems engineering.";
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://elliottelford.com";
+
+// Related Properties - The Elliot Telford Universe
+export const RELATED_SITES = {
+  portfolio: {
+    url: "https://elliottelford.com",
+    name: "Elliot Telford",
+    description: "Main portfolio showcasing simulations, projects, and blog",
+    type: "portfolio"
+  },
+  game: {
+    url: "https://exploretheuniverse2175.com",
+    name: "Explore the Universe 2175",
+    description: "Official website for the physics-based space RTS game",
+    type: "product"
+  }
+} as const;
 
 export const SOCIAL_LINKS = {
   github: "https://github.com/elliottelford",
@@ -14,14 +31,25 @@ export const SOCIAL_LINKS = {
   email: "contact@elliottelford.com",
 };
 
+// Main Navigation (Internal Links)
 export const NAVIGATION_LINKS = [
-  { name: "Home", href: "/" },
-  { name: "Simulations", href: "/simulations" },
-  { name: "Game", href: "/game" },
-  { name: "Projects", href: "/projects" },
-  { name: "Blog", href: "/blog" },
-  { name: "About", href: "/about" },
-  { name: "Contact", href: "/contact" },
+  { name: "Home", href: "/", description: "Portfolio home and latest updates" },
+  { name: "Simulations", href: "/simulations", description: "Interactive astrophysics simulations" },
+  { name: "Projects", href: "/projects", description: "Software engineering projects" },
+  { name: "Blog", href: "/blog", description: "Technical writing and insights" },
+  { name: "About", href: "/about", description: "Background and mission" },
+  { name: "Contact", href: "/contact", description: "Get in touch" },
+];
+
+// External Navigation (Cross-site Links)
+export const EXTERNAL_NAVIGATION_LINKS = [
+  {
+    name: "Play the Game",
+    href: "https://exploretheuniverse2175.com",
+    description: "Visit the official Explore the Universe 2175 website",
+    isExternal: true,
+    icon: "🎮"
+  },
 ];
 
 export const SIMULATION_CATEGORIES = [

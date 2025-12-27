@@ -10,8 +10,9 @@ const pillars = [
     title: 'Game Development',
     description: 'Explore the Universe 2175 - A physics-based space RTS featuring adaptive AI and realistic orbital mechanics powered by a custom Rust engine.',
     highlights: ['Adaptive AI', 'Orbital Mechanics', 'Custom Rust Engine'],
-    cta: 'View Game Hub',
-    href: '/game',
+    cta: 'Visit Game Website',
+    href: 'https://exploretheuniverse2175.com',
+    isExternal: true,
     gradient: 'from-accent/20 to-transparent',
   },
   {
@@ -74,6 +75,7 @@ export const PillarCards: React.FC = () => {
             >
               <Card
                 href={pillar.href}
+                isExternal={pillar.isExternal}
                 className="h-full group relative overflow-hidden"
               >
                 {/* Gradient Background */}

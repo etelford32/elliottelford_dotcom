@@ -4,10 +4,16 @@ import { FeaturedWork } from "@/components/home/FeaturedWork";
 import { RecentPosts } from "@/components/home/RecentPosts";
 import { Newsletter } from "@/components/home/Newsletter";
 import { SocialFollow } from "@/components/home/SocialFollow";
+import { CrossSitePromo } from "@/components/seo/InternalLinks";
+import { StructuredData } from "@/components/seo/SEOHead";
 
 export default function Home() {
   return (
     <div className="relative">
+      {/* Structured Data for SEO */}
+      <StructuredData type="person" />
+      <StructuredData type="website" />
+
       {/* Hero Section with Three.js Background */}
       <Hero />
 
@@ -18,6 +24,9 @@ export default function Home() {
 
         {/* Featured Work */}
         <FeaturedWork />
+
+        {/* Cross-Site Promotional Banner */}
+        <CrossSitePromo />
 
         {/* Recent Blog Posts */}
         <RecentPosts />

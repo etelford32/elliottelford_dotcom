@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { NAVIGATION_LINKS, SITE_NAME } from '@/lib/constants';
+import { NAVIGATION_LINKS, EXTERNAL_NAVIGATION_LINKS, SITE_NAME } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { MobileNav } from './MobileNav';
 
@@ -75,6 +75,28 @@ export const Header: React.FC = () => {
                   </li>
                 );
               })}
+
+              {/* External Links - Special Styling */}
+              {EXTERNAL_NAVIGATION_LINKS.map((link) => (
+                <li key={link.href}>
+                  <a
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="relative px-6 py-3 text-base font-medium transition-all duration-300 rounded-lg group overflow-hidden bg-gradient-to-r from-secondary/20 to-accent/20 border border-secondary/40 hover:border-secondary/60 text-foreground hover:text-accent"
+                  >
+                    {/* Animated glow */}
+                    <span className="absolute inset-0 bg-gradient-to-r from-secondary/20 via-accent/20 to-secondary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <span className="relative flex items-center gap-2">
+                      <span>{link.icon}</span>
+                      <span>{link.name}</span>
+                      <svg className="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </span>
+                  </a>
+                </li>
+              ))}
             </ul>
 
             {/* Mobile Menu Button */}

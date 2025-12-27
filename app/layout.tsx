@@ -4,45 +4,20 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { DevBanner } from "@/components/layout/DevBanner";
 import { ScrollProgress } from "@/components/layout/ScrollProgress";
-import { SITE_NAME, SITE_DESCRIPTION, SITE_URL } from "@/lib/constants";
+import { generateSEOMetadata } from "@/components/seo/SEOHead";
+import { SITE_NAME } from "@/lib/constants";
 
 export const metadata: Metadata = {
+  ...generateSEOMetadata({
+    title: `${SITE_NAME} | Game Developer & Computational Astrophysicist`,
+  }),
   title: {
     default: `${SITE_NAME} | Game Developer & Computational Astrophysicist`,
     template: `%s | ${SITE_NAME}`,
   },
-  description: SITE_DESCRIPTION,
-  keywords: [
-    "game development",
-    "astrophysics",
-    "space simulations",
-    "RTS game",
-    "computational physics",
-    "systems engineering",
-    "Three.js",
-    "Rust",
-    "React",
-  ],
-  authors: [{ name: SITE_NAME }],
-  creator: SITE_NAME,
-  openGraph: {
-    type: "website",
-    locale: "en_US",
-    url: SITE_URL,
-    title: `${SITE_NAME} | Game Developer & Computational Astrophysicist`,
-    description: SITE_DESCRIPTION,
-    siteName: SITE_NAME,
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: `${SITE_NAME} | Game Developer & Computational Astrophysicist`,
-    description: SITE_DESCRIPTION,
-    creator: "@elliottelford",
-  },
   icons: {
     icon: "/favicon.ico",
   },
-  metadataBase: new URL(SITE_URL),
 };
 
 export default function RootLayout({
