@@ -145,33 +145,73 @@ export const RecentPosts: React.FC = () => {
           ))}
         </div>
 
-        {/* View All Link */}
+        {/* Blog CTA Section */}
         <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="text-center"
+          className="mt-16"
         >
-          <a
-            href="/blog"
-            className="inline-flex items-center text-accent hover:text-[#52e8c4] transition-colors text-lg font-medium"
-          >
-            <span>View All Posts</span>
-            <svg
-              className="w-5 h-5 ml-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17 8l4 4m0 0l-4 4m4-4H3"
-              />
-            </svg>
-          </a>
+          <div className="relative group max-w-4xl mx-auto">
+            {/* Glow effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-accent/30 via-secondary/30 to-accent/30 blur-2xl opacity-60 group-hover:opacity-80 transition-opacity" />
+
+            {/* Card */}
+            <div className="relative bg-primary/60 backdrop-blur-md border border-accent/30 rounded-2xl p-8 lg:p-12">
+              <div className="text-center space-y-6">
+                <div className="inline-block">
+                  <div className="px-6 py-3 bg-accent/10 backdrop-blur-sm border border-accent/30 rounded-xl">
+                    <h3 className="text-2xl md:text-3xl font-bold text-accent">
+                      📝 Technical Blog at elliottelford.com
+                    </h3>
+                  </div>
+                </div>
+
+                <div className="max-w-2xl mx-auto">
+                  <div className="px-6 py-4 bg-primary/40 backdrop-blur-sm border border-accent/20 rounded-xl">
+                    <p className="text-base md:text-lg text-foreground/80 leading-relaxed">
+                      Deep dives into orbital mechanics, game development, AI systems, and the intersection
+                      of computational astrophysics with real-time strategy. New posts every week.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Topics */}
+                <div className="flex flex-wrap gap-3 justify-center">
+                  {['Orbital Mechanics', 'Game AI', 'WebGL Shaders', 'Black Holes', 'Rust Programming'].map((topic) => (
+                    <span
+                      key={topic}
+                      className="px-4 py-2 bg-secondary/20 text-secondary border border-secondary/40 rounded-lg text-sm font-medium"
+                    >
+                      {topic}
+                    </span>
+                  ))}
+                </div>
+
+                {/* CTA */}
+                <a
+                  href="/blog"
+                  className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-accent to-secondary text-primary font-bold rounded-xl hover:shadow-lg hover:shadow-accent/30 transition-all duration-300 group"
+                >
+                  <span>Read All Blog Posts</span>
+                  <svg
+                    className="w-5 h-5 group-hover:translate-x-1 transition-transform"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17 8l4 4m0 0l-4 4m4-4H3"
+                    />
+                  </svg>
+                </a>
+              </div>
+            </div>
+          </div>
         </motion.div>
       </div>
     </section>

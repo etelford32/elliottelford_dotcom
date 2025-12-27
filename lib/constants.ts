@@ -27,7 +27,7 @@ export const SOCIAL_LINKS = {
   github: "https://github.com/elliottelford",
   twitter: "https://twitter.com/elliottelford",
   linkedin: "https://linkedin.com/in/elliottelford",
-  steam: "https://store.steampowered.com/app/your-game-id",
+  steam: "https://store.steampowered.com/app/4094340/Explore_the_Universe_2175/",
   email: "contact@elliottelford.com",
 };
 

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { SOCIAL_LINKS } from '@/lib/constants';
 
@@ -43,7 +44,18 @@ const socialPlatforms = [
       </svg>
     ),
     href: SOCIAL_LINKS.steam,
-    color: 'hover:text-[#64ffda]',
+    color: 'hover:text-[#66c0f4]', // Steam blue
+  },
+  {
+    name: 'Blog',
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+      </svg>
+    ),
+    href: '/blog',
+    color: 'hover:text-[#a78bfa]', // Purple/secondary
+    isInternal: true,
   },
 ];
 
@@ -78,37 +90,46 @@ export const SocialFollow: React.FC = () => {
 
           {/* Social Icons */}
           <div className="flex justify-center items-center gap-8 mb-16">
-            {socialPlatforms.map((platform, index) => (
-              <motion.a
-                key={platform.name}
-                href={platform.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                initial={{ opacity: 0, scale: 0 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{
-                  duration: 0.4,
-                  delay: index * 0.1,
-                  type: 'spring',
-                  bounce: 0.6
-                }}
-                whileHover={{
-                  scale: 1.3,
-                  rotate: [0, -5, 5, 0],
-                  boxShadow: '0 0 20px rgba(100, 255, 218, 0.4)',
-                  transition: { duration: 0.3 }
-                }}
-                whileTap={{
-                  scale: 0.85,
-                  rotate: -10
-                }}
-                className={`p-4 bg-card-bg border border-accent/30 rounded-lg text-foreground/70 transition-all hover:border-accent/60 ${platform.color}`}
-                aria-label={`Follow on ${platform.name}`}
-              >
-                {platform.icon}
-              </motion.a>
-            ))}
+            {socialPlatforms.map((platform, index) => {
+              const MotionComponent = platform.isInternal ? motion(Link) : motion.a;
+              const linkProps = platform.isInternal
+                ? { href: platform.href }
+                : {
+                    href: platform.href,
+                    target: '_blank' as const,
+                    rel: 'noopener noreferrer',
+                  };
+
+              return (
+                <MotionComponent
+                  key={platform.name}
+                  {...linkProps}
+                  initial={{ opacity: 0, scale: 0 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{
+                    duration: 0.4,
+                    delay: index * 0.1,
+                    type: 'spring',
+                    bounce: 0.6
+                  }}
+                  whileHover={{
+                    scale: 1.3,
+                    rotate: [0, -5, 5, 0],
+                    boxShadow: '0 0 20px rgba(100, 255, 218, 0.4)',
+                    transition: { duration: 0.3 }
+                  }}
+                  whileTap={{
+                    scale: 0.85,
+                    rotate: -10
+                  }}
+                  className={`p-4 bg-card-bg border border-accent/30 rounded-lg text-foreground/70 transition-all hover:border-accent/60 ${platform.color}`}
+                  aria-label={`Follow on ${platform.name}`}
+                >
+                  {platform.icon}
+                </MotionComponent>
+              );
+            })}
           </div>
 
           {/* Divider */}
