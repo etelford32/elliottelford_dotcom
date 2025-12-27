@@ -94,6 +94,26 @@ body {
   background: #52e8c4;
 }
 
+/* Enhanced hover lift animation */
+@keyframes hover-lift {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+/* Smooth glow pulse */
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(100, 255, 218, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(100, 255, 218, 0.4);
+  }
+}
+
 /* Shimmer animation for PRO badge */
 @keyframes shimmer {
   0% {
