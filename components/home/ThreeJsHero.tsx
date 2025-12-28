@@ -10,7 +10,7 @@ function StarField() {
   const glowRef = useRef<THREE.Points>(null);
   const { mouse } = useThree();
 
-  // Custom shader material for stars
+  // Custom shader material for stars with UV duotone edges
   const starMaterial = useMemo(() => {
     return new THREE.ShaderMaterial({
       uniforms: {
@@ -23,6 +23,7 @@ function StarField() {
         attribute vec3 color;
         varying vec3 vColor;
         varying float vIntensity;
+        varying float vDistance;
 
         void main() {
           vColor = color;
@@ -32,35 +33,68 @@ function StarField() {
           vIntensity = 0.6 + pulse * 0.4;
 
           vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+          vDistance = -mvPosition.z;
 
           // Size based on depth and pulse
-          float size = (8.0 / -mvPosition.z) * pixelRatio;
-          size *= (0.8 + pulse * 0.4);
+          float size = (12.0 / vDistance) * pixelRatio;
+          size *= (0.8 + pulse * 0.6);
 
           gl_PointSize = size;
           gl_Position = projectionMatrix * mvPosition;
         }
       `,
       fragmentShader: `
+        uniform float time;
         varying vec3 vColor;
         varying float vIntensity;
+        varying float vDistance;
 
         void main() {
-          // Create circular stars with soft edges
+          // Create circular stars with duotone UV edges
           vec2 center = gl_PointCoord - vec2(0.5);
           float dist = length(center);
 
-          // Soft falloff for glow effect
-          float alpha = 1.0 - smoothstep(0.0, 0.5, dist);
-          alpha = pow(alpha, 1.5);
+          // Multi-layer glow system
 
-          // Core brightness
-          float core = 1.0 - smoothstep(0.0, 0.2, dist);
-          core = pow(core, 3.0);
+          // Outer UV glow (purple/cyan duotone)
+          float outerGlow = 1.0 - smoothstep(0.3, 0.5, dist);
+          outerGlow = pow(outerGlow, 2.0);
 
-          // Combine glow and core
-          vec3 finalColor = vColor * (alpha + core * 1.5);
-          float finalAlpha = (alpha * 0.85 + core) * vIntensity;
+          // Mid-range glow
+          float midGlow = 1.0 - smoothstep(0.15, 0.35, dist);
+          midGlow = pow(midGlow, 1.8);
+
+          // Bright white core
+          float core = 1.0 - smoothstep(0.0, 0.15, dist);
+          core = pow(core, 4.0);
+
+          // UV color bands - duotone edges
+          vec3 uvPurple = vec3(0.7, 0.4, 1.0); // Bright purple
+          vec3 uvCyan = vec3(0.3, 0.9, 1.0);   // Bright cyan
+          vec3 white = vec3(1.0, 1.0, 1.0);
+
+          // Animate color shift based on time and position
+          float colorShift = sin(time * 0.5 + dist * 10.0) * 0.5 + 0.5;
+          vec3 edgeColor = mix(uvPurple, uvCyan, colorShift);
+
+          // Build final color with layered approach
+          vec3 finalColor = vec3(0.0);
+
+          // Add outer UV edge glow
+          finalColor += edgeColor * outerGlow * 1.5;
+
+          // Add mid-range with original star color
+          finalColor += vColor * midGlow * 2.0;
+
+          // Add bright white core
+          finalColor += white * core * 3.0;
+
+          // Calculate alpha with enhanced glow
+          float finalAlpha = (outerGlow * 0.6 + midGlow * 0.8 + core * 1.0) * vIntensity;
+
+          // Add shimmer effect
+          float shimmer = sin(time * 3.0 + vDistance) * 0.1 + 0.9;
+          finalAlpha *= shimmer;
 
           gl_FragColor = vec4(finalColor, finalAlpha);
         }
@@ -100,30 +134,35 @@ function StarField() {
         starData.push({ x, y, z });
       }
 
-      // MUCH darker, more dramatic color variation
+      // BRIGHT, vivid UV color variation for black background
       const colorVariation = Math.random();
       const starType = Math.random();
 
-      if (starType > 0.95) {
-        // Brilliant purple stars
-        colors[i3] = 0.5 + colorVariation * 0.3;
-        colors[i3 + 1] = 0.1 + colorVariation * 0.2;
-        colors[i3 + 2] = 0.8 + colorVariation * 0.2;
-      } else if (starType > 0.85) {
-        // Brilliant blue stars
-        colors[i3] = 0.1 + colorVariation * 0.15;
-        colors[i3 + 1] = 0.4 + colorVariation * 0.3;
-        colors[i3 + 2] = 0.95 + colorVariation * 0.05;
+      if (starType > 0.92) {
+        // Ultra-bright purple/magenta stars
+        colors[i3] = 0.8 + colorVariation * 0.2;
+        colors[i3 + 1] = 0.3 + colorVariation * 0.2;
+        colors[i3 + 2] = 1.0;
+      } else if (starType > 0.82) {
+        // Electric cyan stars
+        colors[i3] = 0.2 + colorVariation * 0.2;
+        colors[i3 + 1] = 0.8 + colorVariation * 0.2;
+        colors[i3 + 2] = 1.0;
       } else if (starType > 0.7) {
-        // Cyan stars
-        colors[i3] = 0.15 + colorVariation * 0.2;
-        colors[i3 + 1] = 0.6 + colorVariation * 0.25;
-        colors[i3 + 2] = 0.85 + colorVariation * 0.15;
+        // Bright violet stars
+        colors[i3] = 0.6 + colorVariation * 0.3;
+        colors[i3 + 1] = 0.4 + colorVariation * 0.2;
+        colors[i3 + 2] = 0.9 + colorVariation * 0.1;
+      } else if (starType > 0.5) {
+        // Bright blue stars
+        colors[i3] = 0.3 + colorVariation * 0.2;
+        colors[i3 + 1] = 0.5 + colorVariation * 0.3;
+        colors[i3 + 2] = 0.95 + colorVariation * 0.05;
       } else {
-        // Deep blue-gray stars (darker majority)
-        colors[i3] = 0.15 + colorVariation * 0.15;
-        colors[i3 + 1] = 0.25 + colorVariation * 0.2;
-        colors[i3 + 2] = 0.45 + colorVariation * 0.25;
+        // White-blue stars (majority)
+        colors[i3] = 0.7 + colorVariation * 0.3;
+        colors[i3 + 1] = 0.8 + colorVariation * 0.2;
+        colors[i3 + 2] = 1.0;
       }
     }
 
@@ -190,15 +229,15 @@ function StarField() {
       {/* Main starfield with custom shader */}
       <points ref={ref} frustumCulled={false} geometry={geometry} material={starMaterial} />
 
-      {/* Glowing accent stars with enhanced brightness */}
+      {/* Glowing accent stars with enhanced UV brightness */}
       <Points ref={glowRef} positions={glowPositions} stride={3} frustumCulled={false}>
         <PointMaterial
           transparent
-          color="#3b82f6"
-          size={0.08}
+          color="#a855f7"
+          size={0.12}
           sizeAttenuation={true}
           depthWrite={false}
-          opacity={0.9}
+          opacity={0.95}
           blending={THREE.AdditiveBlending}
         />
       </Points>
@@ -232,7 +271,8 @@ function FluxRopes({ starData }: { starData: Array<{ x: number; y: number; z: nu
 
         // Only connect stars that are reasonably close
         if (distance < 8) {
-          const color = Math.random() > 0.5 ? '#2563eb' : '#8b5cf6';
+          const colorChoice = Math.random();
+          const color = colorChoice > 0.66 ? '#a855f7' : colorChoice > 0.33 ? '#06b6d4' : '#8b5cf6';
           ropes.push({
             start: new THREE.Vector3(start.x, start.y, start.z),
             end: new THREE.Vector3(end.x, end.y, end.z),
@@ -285,7 +325,7 @@ function FluxRope({ start, end, color }: { start: THREE.Vector3; end: THREE.Vect
     if (ref.current) {
       const time = state.clock.getElapsedTime();
       const material = ref.current.material as THREE.LineBasicMaterial;
-      material.opacity = 0.15 + Math.sin(time * 0.5) * 0.05;
+      material.opacity = 0.35 + Math.sin(time * 0.5) * 0.15;
     }
   });
 
@@ -294,9 +334,9 @@ function FluxRope({ start, end, color }: { start: THREE.Vector3; end: THREE.Vect
       ref={ref}
       points={points}
       color={color}
-      lineWidth={1}
+      lineWidth={1.5}
       transparent
-      opacity={0.15}
+      opacity={0.35}
     />
   );
 }
@@ -351,7 +391,7 @@ function ShootingStar({ progress, offset }: { progress: number; offset: THREE.Ve
     <mesh ref={ref}>
       <sphereGeometry args={[0.025, 8, 8]} />
       <meshBasicMaterial
-        color="#2563eb"
+        color="#a855f7"
         transparent
         opacity={1}
       />
@@ -395,17 +435,23 @@ function NebulaCloud() {
           vec2 center = vUv - 0.5;
           float dist = length(center);
 
-          // Nebula glow effect
+          // Nebula glow effect - enhanced for dark background
           float glow = 1.0 - smoothstep(0.0, 0.5, dist);
-          glow = pow(glow, 2.0);
+          glow = pow(glow, 2.5);
 
-          // Color variation - softer for white background
-          vec3 color1 = vec3(0.15, 0.4, 0.9); // Blue
-          vec3 color2 = vec3(0.55, 0.35, 0.95); // Purple
-          vec3 color = mix(color1, color2, sin(time * 0.4) * 0.5 + 0.5);
+          // UV color variation - bright and vivid for dark background
+          vec3 color1 = vec3(0.7, 0.4, 1.0); // Bright purple
+          vec3 color2 = vec3(0.3, 0.9, 1.0); // Electric cyan
+          vec3 color3 = vec3(0.8, 0.5, 1.0); // Magenta
 
-          // Subtle opacity
-          float opacity = glow * (0.03 + sin(time * 0.25) * 0.015);
+          // Triple color mix for complex shifting
+          float mixer1 = sin(time * 0.4) * 0.5 + 0.5;
+          float mixer2 = cos(time * 0.3) * 0.5 + 0.5;
+          vec3 tempColor = mix(color1, color2, mixer1);
+          vec3 color = mix(tempColor, color3, mixer2 * 0.5);
+
+          // Enhanced opacity for visibility on dark background
+          float opacity = glow * (0.12 + sin(time * 0.25) * 0.06);
 
           gl_FragColor = vec4(color, opacity);
         }

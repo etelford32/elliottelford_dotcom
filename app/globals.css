@@ -1,13 +1,13 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #0f172a;
-  --primary: #ffffff;
-  --accent: #2563eb;
-  --secondary: #8b5cf6;
-  --card-bg: #f8fafc;
-  --card-border: #e2e8f0;
+  --background: #000000;
+  --foreground: #e0e7ff;
+  --primary: #0a0a0f;
+  --accent: #8b5cf6;
+  --secondary: #06b6d4;
+  --card-bg: #0f0f1a;
+  --card-border: #1e1e3f;
 }
 
 @theme inline {
@@ -58,7 +58,7 @@ body {
   width: 100%;
   height: 100%;
   z-index: -1;
-  background: linear-gradient(to bottom, #ffffff 0%, #f8fafc 100%);
+  background: radial-gradient(ellipse at center, #0a0a1f 0%, #000000 100%);
 }
 
 .starfield::before {
@@ -69,11 +69,11 @@ body {
   width: 100%;
   height: 100%;
   background-image:
-    radial-gradient(2px 2px at 20px 30px, rgba(37, 99, 235, 0.15), transparent),
-    radial-gradient(2px 2px at 60px 70px, rgba(139, 92, 246, 0.15), transparent),
-    radial-gradient(1px 1px at 50px 50px, rgba(15, 23, 42, 0.2), transparent),
-    radial-gradient(1px 1px at 130px 80px, rgba(37, 99, 235, 0.1), transparent),
-    radial-gradient(2px 2px at 90px 10px, rgba(139, 92, 246, 0.12), transparent);
+    radial-gradient(2px 2px at 20px 30px, rgba(139, 92, 246, 0.4), transparent),
+    radial-gradient(2px 2px at 60px 70px, rgba(6, 182, 212, 0.3), transparent),
+    radial-gradient(1px 1px at 50px 50px, rgba(139, 92, 246, 0.5), transparent),
+    radial-gradient(1px 1px at 130px 80px, rgba(6, 182, 212, 0.35), transparent),
+    radial-gradient(2px 2px at 90px 10px, rgba(168, 85, 247, 0.45), transparent);
   background-size: 200px 200px;
   background-position: 0 0, 40px 60px, 130px 270px, 70px 100px, 150px 50px;
   animation: twinkle 5s ease-in-out infinite;
@@ -89,12 +89,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--accent);
+  background: linear-gradient(180deg, var(--accent) 0%, var(--secondary) 100%);
   border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #1d4ed8;
+  background: linear-gradient(180deg, #a78bfa 0%, #22d3ee 100%);
 }
 
 /* Enhanced hover lift animation */
@@ -161,50 +161,53 @@ body {
   }
 }
 
-/* Futuristic Text Effects */
+/* Futuristic Text Effects - Dark Theme UV Glow */
 .text-shadow-glow {
   text-shadow:
-    0 0 10px rgba(37, 99, 235, 0.3),
-    0 0 20px rgba(37, 99, 235, 0.2),
-    0 0 30px rgba(37, 99, 235, 0.1);
+    0 0 10px rgba(139, 92, 246, 0.8),
+    0 0 20px rgba(139, 92, 246, 0.6),
+    0 0 30px rgba(139, 92, 246, 0.4),
+    0 0 40px rgba(139, 92, 246, 0.2);
 }
 
 .text-shadow-glow-purple {
   text-shadow:
-    0 0 10px rgba(139, 92, 246, 0.3),
-    0 0 20px rgba(139, 92, 246, 0.2),
-    0 0 30px rgba(139, 92, 246, 0.1);
+    0 0 10px rgba(168, 85, 247, 0.9),
+    0 0 20px rgba(168, 85, 247, 0.6),
+    0 0 30px rgba(168, 85, 247, 0.3);
 }
 
 .text-shadow-subtle {
   text-shadow:
-    0 2px 4px rgba(15, 23, 42, 0.1),
-    0 4px 8px rgba(15, 23, 42, 0.05);
+    0 2px 8px rgba(139, 92, 246, 0.3),
+    0 4px 16px rgba(6, 182, 212, 0.2);
 }
 
 .text-bevel {
   text-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.8),
-    0 2px 3px rgba(15, 23, 42, 0.15),
-    0 -1px 1px rgba(15, 23, 42, 0.1);
+    0 1px 0 rgba(139, 92, 246, 0.6),
+    0 2px 4px rgba(6, 182, 212, 0.4),
+    0 -1px 1px rgba(168, 85, 247, 0.3);
 }
 
 .text-3d {
   text-shadow:
-    1px 1px 0 rgba(15, 23, 42, 0.1),
-    2px 2px 0 rgba(15, 23, 42, 0.08),
-    3px 3px 0 rgba(15, 23, 42, 0.06),
-    4px 4px 0 rgba(15, 23, 42, 0.04),
-    5px 5px 10px rgba(15, 23, 42, 0.15);
+    1px 1px 0 rgba(139, 92, 246, 0.4),
+    2px 2px 0 rgba(139, 92, 246, 0.3),
+    3px 3px 0 rgba(6, 182, 212, 0.25),
+    4px 4px 0 rgba(6, 182, 212, 0.2),
+    5px 5px 20px rgba(139, 92, 246, 0.6),
+    0 0 40px rgba(168, 85, 247, 0.3);
 }
 
 .text-3d-accent {
   text-shadow:
-    1px 1px 0 rgba(37, 99, 235, 0.2),
-    2px 2px 0 rgba(37, 99, 235, 0.15),
-    3px 3px 0 rgba(37, 99, 235, 0.1),
-    4px 4px 0 rgba(37, 99, 235, 0.05),
-    5px 5px 15px rgba(37, 99, 235, 0.2);
+    1px 1px 0 rgba(139, 92, 246, 0.5),
+    2px 2px 0 rgba(139, 92, 246, 0.4),
+    3px 3px 0 rgba(6, 182, 212, 0.3),
+    4px 4px 0 rgba(6, 182, 212, 0.2),
+    5px 5px 25px rgba(168, 85, 247, 0.8),
+    0 0 50px rgba(139, 92, 246, 0.5);
 }
 
 /* Font family utilities */
