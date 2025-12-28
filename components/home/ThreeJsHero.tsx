@@ -1009,7 +1009,7 @@ function CameraController({
 }
 
 export const ThreeJsHero: React.FC = () => {
-  const [showControls, setShowControls] = useState(true);
+  const [showControls, setShowControls] = useState(false); // Start minimized
   const [autoRotate, setAutoRotate] = useState(false);
   const [cameraPreset, setCameraPreset] = useState<{
     position: [number, number, number];
@@ -1037,7 +1037,7 @@ export const ThreeJsHero: React.FC = () => {
     <div className="absolute inset-0 -z-10">
       {/* 3D Camera Controls UI Panel */}
       {showControls && (
-        <div className="absolute top-6 left-6 z-10 bg-primary/90 backdrop-blur-md border border-accent/30 rounded-xl p-5 space-y-4 font-mono text-sm pointer-events-auto shadow-2xl max-w-xs">
+        <div className="absolute top-6 left-6 z-10 bg-primary/95 backdrop-blur-md border border-accent/40 rounded-xl p-5 space-y-4 font-mono text-sm pointer-events-auto shadow-2xl max-w-xs animate-in fade-in slide-in-from-left-5 duration-300">
           {/* Header */}
           <div className="flex items-center justify-between gap-4 pb-3 border-b border-accent/20">
             <div className="flex items-center gap-2">
@@ -1149,16 +1149,25 @@ export const ThreeJsHero: React.FC = () => {
       {!showControls && (
         <button
           onClick={() => setShowControls(true)}
-          className="absolute top-6 left-6 z-10 bg-primary/90 backdrop-blur-md border border-accent/30 rounded-lg px-4 py-2.5 font-mono text-sm text-accent hover:bg-accent/20 hover:scale-105 transition-all shadow-lg pointer-events-auto flex items-center gap-2 font-semibold"
+          className="absolute top-6 left-6 z-10 bg-primary/95 backdrop-blur-md border border-accent/40 rounded-lg px-4 py-2.5 font-mono text-sm text-accent hover:bg-accent/30 hover:scale-105 transition-all shadow-lg pointer-events-auto flex items-center gap-2 font-semibold animate-in fade-in slide-in-from-left-5 duration-300"
+          title="Open camera controls"
         >
           <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-          CAMERA CONTROLS
+          <span>CAMERA</span>
         </button>
+      )}
+
+      {/* Helper text for first-time users - only shows when controls are minimized */}
+      {!showControls && (
+        <div className="absolute bottom-6 left-6 z-10 bg-primary/80 backdrop-blur-md border border-accent/30 rounded-lg px-4 py-2 font-mono text-xs text-foreground/70 pointer-events-none shadow-lg max-w-xs animate-in fade-in slide-in-from-bottom-5 duration-500 delay-1000">
+          <span className="text-accent">💡 Tip:</span> Drag to rotate • Right-click to pan • Scroll to zoom
+        </div>
       )}
 
       <Canvas
         camera={{ position: [0, 0, 5], fov: 75 }}
-        style={{ background: 'transparent' }}
+        style={{ background: 'transparent', cursor: 'grab' }}
+        className="touch-none"
         dpr={[1, 2]}
       >
         <CameraController autoRotate={autoRotate} cameraPreset={cameraPreset} />
