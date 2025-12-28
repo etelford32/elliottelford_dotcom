@@ -963,69 +963,196 @@ function NebulaCloud() {
   );
 }
 
-// Camera Controls Component
-function CameraController() {
+// Camera Controls Component with enhanced 3D exploration
+function CameraController({
+  autoRotate,
+  cameraPreset
+}: {
+  autoRotate: boolean;
+  cameraPreset: { position: [number, number, number]; target: [number, number, number] } | null;
+}) {
+  const controlsRef = useRef<any>(null);
+  const { camera } = useThree();
+
+  // Apply camera preset with smooth transition
+  useFrame(() => {
+    if (cameraPreset && controlsRef.current) {
+      const { position, target } = cameraPreset;
+
+      // Smooth camera transition
+      camera.position.lerp(new THREE.Vector3(...position), 0.05);
+      controlsRef.current.target.lerp(new THREE.Vector3(...target), 0.05);
+      controlsRef.current.update();
+    }
+  });
+
   return (
     <OrbitControls
+      ref={controlsRef}
       enableZoom={true}
       enablePan={true}
       enableRotate={true}
-      minDistance={2}
-      maxDistance={15}
-      zoomSpeed={0.5}
-      panSpeed={0.5}
-      rotateSpeed={0.3}
+      autoRotate={autoRotate}
+      autoRotateSpeed={0.5}
+      minDistance={1.5}
+      maxDistance={20}
+      zoomSpeed={0.8}
+      panSpeed={0.8}
+      rotateSpeed={0.5}
+      enableDamping={true}
+      dampingFactor={0.05}
+      screenSpacePanning={true}
+      minPolarAngle={0}
+      maxPolarAngle={Math.PI}
     />
   );
 }
 
 export const ThreeJsHero: React.FC = () => {
   const [showControls, setShowControls] = useState(true);
+  const [autoRotate, setAutoRotate] = useState(false);
+  const [cameraPreset, setCameraPreset] = useState<{
+    position: [number, number, number];
+    target: [number, number, number];
+  } | null>(null);
+
+  // Camera preset positions
+  const presets = {
+    default: { position: [0, 0, 5] as [number, number, number], target: [0, 0, 0] as [number, number, number] },
+    top: { position: [0, 8, 0] as [number, number, number], target: [0, 0, 0] as [number, number, number] },
+    side: { position: [8, 0, 0] as [number, number, number], target: [0, 0, 0] as [number, number, number] },
+    front: { position: [0, 0, 8] as [number, number, number], target: [0, 0, 0] as [number, number, number] },
+    isometric: { position: [6, 6, 6] as [number, number, number], target: [0, 0, 0] as [number, number, number] },
+    closeup: { position: [0, 0, 2.5] as [number, number, number], target: [0, 0, 0] as [number, number, number] },
+    wide: { position: [0, 0, 12] as [number, number, number], target: [0, 0, 0] as [number, number, number] },
+  };
+
+  const handlePreset = (preset: keyof typeof presets) => {
+    setCameraPreset(presets[preset]);
+    // Clear preset after animation completes
+    setTimeout(() => setCameraPreset(null), 2000);
+  };
 
   return (
     <div className="absolute inset-0 -z-10">
-      {/* 3D Camera Controls UI */}
+      {/* 3D Camera Controls UI Panel */}
       {showControls && (
-        <div className="absolute top-6 left-6 z-10 bg-primary/80 backdrop-blur-md border border-accent/30 rounded-lg p-4 space-y-3 font-mono text-sm pointer-events-auto">
-          <div className="flex items-center justify-between gap-4 mb-2">
-            <h3 className="text-accent font-semibold text-base">3D Camera Controls</h3>
+        <div className="absolute top-6 left-6 z-10 bg-primary/90 backdrop-blur-md border border-accent/30 rounded-xl p-5 space-y-4 font-mono text-sm pointer-events-auto shadow-2xl max-w-xs">
+          {/* Header */}
+          <div className="flex items-center justify-between gap-4 pb-3 border-b border-accent/20">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+              <h3 className="text-accent font-semibold text-base tracking-wide">CAMERA CONTROL</h3>
+            </div>
             <button
               onClick={() => setShowControls(false)}
-              className="text-foreground/50 hover:text-foreground transition-colors"
+              className="text-foreground/50 hover:text-foreground transition-colors text-lg font-bold"
               aria-label="Close controls"
             >
               ✕
             </button>
           </div>
-          <div className="space-y-2 text-foreground/80">
-            <div className="flex items-center gap-3">
-              <span className="text-accent font-semibold min-w-[80px]">Rotate:</span>
-              <span className="text-xs">Left Click + Drag</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-accent font-semibold min-w-[80px]">Pan:</span>
-              <span className="text-xs">Right Click + Drag</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-accent font-semibold min-w-[80px]">Zoom:</span>
-              <span className="text-xs">Scroll Wheel</span>
+
+          {/* Camera Presets */}
+          <div className="space-y-3">
+            <h4 className="text-xs text-foreground/60 uppercase tracking-wider font-semibold">View Presets</h4>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => handlePreset('default')}
+                className="px-3 py-2 bg-primary/60 hover:bg-accent/20 border border-accent/30 rounded-lg text-xs text-foreground hover:text-accent transition-all hover:scale-105 active:scale-95"
+              >
+                🎯 Default
+              </button>
+              <button
+                onClick={() => handlePreset('top')}
+                className="px-3 py-2 bg-primary/60 hover:bg-accent/20 border border-accent/30 rounded-lg text-xs text-foreground hover:text-accent transition-all hover:scale-105 active:scale-95"
+              >
+                ⬆️ Top View
+              </button>
+              <button
+                onClick={() => handlePreset('side')}
+                className="px-3 py-2 bg-primary/60 hover:bg-accent/20 border border-accent/30 rounded-lg text-xs text-foreground hover:text-accent transition-all hover:scale-105 active:scale-95"
+              >
+                ↔️ Side View
+              </button>
+              <button
+                onClick={() => handlePreset('front')}
+                className="px-3 py-2 bg-primary/60 hover:bg-accent/20 border border-accent/30 rounded-lg text-xs text-foreground hover:text-accent transition-all hover:scale-105 active:scale-95"
+              >
+                👁️ Front View
+              </button>
+              <button
+                onClick={() => handlePreset('isometric')}
+                className="px-3 py-2 bg-primary/60 hover:bg-accent/20 border border-accent/30 rounded-lg text-xs text-foreground hover:text-accent transition-all hover:scale-105 active:scale-95"
+              >
+                📐 Isometric
+              </button>
+              <button
+                onClick={() => handlePreset('closeup')}
+                className="px-3 py-2 bg-primary/60 hover:bg-accent/20 border border-accent/30 rounded-lg text-xs text-foreground hover:text-accent transition-all hover:scale-105 active:scale-95"
+              >
+                🔍 Close-up
+              </button>
             </div>
           </div>
-          <div className="pt-2 border-t border-accent/20">
-            <p className="text-xs text-foreground/60">
-              Explore the black hole in full 3D space
+
+          {/* Camera Features */}
+          <div className="space-y-3 pt-3 border-t border-accent/20">
+            <h4 className="text-xs text-foreground/60 uppercase tracking-wider font-semibold">Camera Features</h4>
+            <button
+              onClick={() => setAutoRotate(!autoRotate)}
+              className={`w-full px-3 py-2.5 border rounded-lg text-xs font-semibold transition-all hover:scale-105 active:scale-95 ${
+                autoRotate
+                  ? 'bg-accent/30 border-accent text-accent hover:bg-accent/40'
+                  : 'bg-primary/60 border-accent/30 text-foreground hover:bg-accent/20 hover:text-accent'
+              }`}
+            >
+              {autoRotate ? '⏸️ Stop Auto-Rotate' : '▶️ Auto-Rotate'}
+            </button>
+            <button
+              onClick={() => handlePreset('wide')}
+              className="w-full px-3 py-2.5 bg-primary/60 hover:bg-accent/20 border border-accent/30 rounded-lg text-xs text-foreground hover:text-accent transition-all hover:scale-105 active:scale-95 font-semibold"
+            >
+              🌌 Wide View
+            </button>
+          </div>
+
+          {/* Mouse Controls Guide */}
+          <div className="space-y-2 pt-3 border-t border-accent/20">
+            <h4 className="text-xs text-foreground/60 uppercase tracking-wider font-semibold">Mouse Controls</h4>
+            <div className="space-y-1.5 text-foreground/70">
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-accent font-mono">🖱️ L</span>
+                <span>Rotate Camera</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-accent font-mono">🖱️ R</span>
+                <span>Pan Camera</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-accent font-mono">🖱️ ⚙️</span>
+                <span>Zoom In/Out</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="pt-3 border-t border-accent/20">
+            <p className="text-xs text-foreground/50 text-center italic">
+              Explore the black hole in full 3D
             </p>
           </div>
         </div>
       )}
 
-      {/* Toggle button when controls are hidden */}
+      {/* Minimized Toggle Button */}
       {!showControls && (
         <button
           onClick={() => setShowControls(true)}
-          className="absolute top-6 left-6 z-10 bg-primary/80 backdrop-blur-md border border-accent/30 rounded-lg px-4 py-2 font-mono text-sm text-accent hover:bg-primary/90 transition-colors pointer-events-auto"
+          className="absolute top-6 left-6 z-10 bg-primary/90 backdrop-blur-md border border-accent/30 rounded-lg px-4 py-2.5 font-mono text-sm text-accent hover:bg-accent/20 hover:scale-105 transition-all shadow-lg pointer-events-auto flex items-center gap-2 font-semibold"
         >
-          Show Controls
+          <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+          CAMERA CONTROLS
         </button>
       )}
 
@@ -1034,7 +1161,7 @@ export const ThreeJsHero: React.FC = () => {
         style={{ background: 'transparent' }}
         dpr={[1, 2]}
       >
-        <CameraController />
+        <CameraController autoRotate={autoRotate} cameraPreset={cameraPreset} />
         <BlackHole />
         <StarField />
         <ShootingStarTrail />
