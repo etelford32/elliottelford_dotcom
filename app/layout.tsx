@@ -9,10 +9,11 @@ import { SITE_NAME } from "@/lib/constants";
 
 export const metadata: Metadata = {
   ...generateSEOMetadata({
-    title: `${SITE_NAME} | Game Developer & Computational Astrophysicist`,
+    title: `${SITE_NAME} | Interstellar Game Developer & Computational Astrophysicist | Next.js Space Simulations`,
+    description: "Elliot Telford - Building the future through code and physics. Explore scientifically accurate space simulations, black hole visualizations, and cutting-edge game development with Three.js, WebGL, and orbital mechanics.",
   }),
   title: {
-    default: `${SITE_NAME} | Game Developer & Computational Astrophysicist`,
+    default: `${SITE_NAME} | Interstellar Game Developer & Computational Astrophysicist`,
     template: `%s | ${SITE_NAME}`,
   },
   icons: {
@@ -27,6 +28,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="scroll-smooth">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+      </head>
       <body className="antialiased">
         <ScrollProgress />
         <DevBanner />

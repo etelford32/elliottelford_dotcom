@@ -16,12 +16,12 @@ export const Hero: React.FC = () => {
       <ShootingStars />
 
       {/* Content */}
-      <div className="container mx-auto px-6 lg:px-8 py-32 lg:py-40 relative z-10">
+      <div className="container mx-auto px-6 lg:px-8 py-40 lg:py-48 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="text-center max-w-6xl mx-auto space-y-16"
+          className="text-center max-w-6xl mx-auto space-y-20 lg:space-y-24"
         >
           {/* Greeting */}
           <motion.div
@@ -29,7 +29,7 @@ export const Hero: React.FC = () => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2, duration: 0.8 }}
           >
-            <p className="text-accent text-lg md:text-xl font-mono">
+            <p className="text-accent text-xl md:text-2xl font-mono text-shadow-glow tracking-wider">
               Hi, I'm
             </p>
           </motion.div>
@@ -40,8 +40,8 @@ export const Hero: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.8 }}
           >
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-foreground">
-              Elliot Telford
+            <h1 className="text-6xl md:text-8xl lg:text-9xl font-bold text-foreground font-display text-3d tracking-tight">
+              ELLIOT TELFORD
             </h1>
           </motion.div>
 
@@ -52,9 +52,9 @@ export const Hero: React.FC = () => {
             transition={{ delay: 0.6, duration: 0.8 }}
             className="max-w-5xl mx-auto"
           >
-            <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold text-foreground/90 leading-relaxed">
+            <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold text-foreground/90 leading-relaxed font-heading text-bevel tracking-wide">
               Building the Future Through{' '}
-              <span className="text-accent">Code & Physics</span>
+              <span className="text-accent text-shadow-glow">Code & Physics</span>
             </h2>
           </motion.div>
 
@@ -65,7 +65,7 @@ export const Hero: React.FC = () => {
             transition={{ delay: 0.8, duration: 0.8 }}
             className="max-w-3xl mx-auto"
           >
-            <p className="text-lg md:text-xl text-foreground/80 leading-relaxed">
+            <p className="text-xl md:text-2xl text-foreground/80 leading-relaxed font-body text-shadow-subtle tracking-wide">
               Game Developer | Computational Astrophysicist | Systems Engineer
             </p>
           </motion.div>
@@ -77,9 +77,9 @@ export const Hero: React.FC = () => {
             transition={{ delay: 1.0, duration: 0.8 }}
             className="max-w-4xl mx-auto"
           >
-            <p className="text-lg md:text-xl lg:text-2xl text-foreground/90 leading-relaxed">
+            <p className="text-xl md:text-2xl lg:text-3xl text-foreground/90 leading-relaxed font-body text-shadow-subtle tracking-wide">
               Applying science and technology for humanity's optimization as a resilient,{' '}
-              <span className="text-accent font-semibold">interstellar species</span>
+              <span className="text-accent font-semibold text-shadow-glow">interstellar species</span>
             </p>
           </motion.div>
 

@@ -11,18 +11,18 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'primary', size = 'md', href, children, ...props }, ref) => {
-    const baseStyles = "inline-flex items-center justify-center rounded-md font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed";
+    const baseStyles = "font-heading inline-flex items-center justify-center rounded-xl font-semibold tracking-wide transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden group";
 
     const variants = {
-      primary: "bg-accent text-primary hover:bg-[#52e8c4] active:scale-95",
-      secondary: "border-2 border-accent text-accent hover:bg-accent hover:text-primary active:scale-95",
-      ghost: "text-accent hover:bg-accent/10 active:scale-95",
+      primary: "bg-gradient-to-r from-accent to-blue-600 text-white hover:shadow-xl hover:shadow-accent/40 hover:-translate-y-1 active:scale-95 border border-accent/30",
+      secondary: "border-2 border-secondary text-secondary hover:bg-gradient-to-r hover:from-secondary/10 hover:to-purple-500/10 hover:shadow-lg hover:shadow-secondary/30 hover:-translate-y-1 active:scale-95",
+      ghost: "text-accent hover:bg-gradient-to-r hover:from-accent/10 hover:to-blue-500/10 hover:shadow-md hover:-translate-y-0.5 active:scale-95",
     };
 
     const sizes = {
-      sm: "text-sm px-4 py-2",
-      md: "text-base px-6 py-3",
-      lg: "text-lg px-8 py-4",
+      sm: "text-sm px-5 py-2.5",
+      md: "text-base px-7 py-3.5",
+      lg: "text-lg px-9 py-5",
     };
 
     const classes = cn(
@@ -32,17 +32,24 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       className
     );
 
+    const ButtonContent = (
+      <>
+        <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
+        <span className="relative z-10">{children}</span>
+      </>
+    );
+
     if (href) {
       return (
         <Link href={href} className={classes}>
-          {children}
+          {ButtonContent}
         </Link>
       );
     }
 
     return (
       <button ref={ref} className={classes} {...props}>
-        {children}
+        {ButtonContent}
       </button>
     );
   }

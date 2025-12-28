@@ -37,7 +37,7 @@ const pillars = [
 
 export const PillarCards: React.FC = () => {
   return (
-    <section className="py-24 lg:py-32 relative">
+    <section className="py-28 lg:py-36 relative">
       <div className="container mx-auto px-6 lg:px-8">
         {/* Section Header */}
         <motion.div
@@ -45,26 +45,18 @@ export const PillarCards: React.FC = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-20"
+          className="text-center mb-24 lg:mb-28 space-y-8"
         >
-          <div className="inline-block mb-6">
-            <div className="px-8 py-4 bg-accent/10 backdrop-blur-sm border border-accent/30 rounded-2xl">
-              <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-accent">
-                What I Do
-              </h2>
-            </div>
-          </div>
-          <div className="max-w-3xl mx-auto">
-            <div className="px-8 py-5 bg-primary/40 backdrop-blur-sm border border-accent/20 rounded-xl">
-              <p className="text-lg md:text-xl text-foreground/80 leading-relaxed">
-                Bridging the gap between theoretical physics and practical software engineering
-              </p>
-            </div>
-          </div>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-accent font-heading text-shadow-glow tracking-wide">
+            What I Do
+          </h2>
+          <p className="text-xl md:text-2xl text-foreground/80 leading-relaxed max-w-3xl mx-auto font-body text-shadow-subtle">
+            Bridging the gap between theoretical physics and practical software engineering
+          </p>
         </motion.div>
 
         {/* Pillar Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 lg:gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 lg:gap-16">
           {pillars.map((pillar, index) => (
             <motion.div
               key={pillar.title}
@@ -89,17 +81,17 @@ export const PillarCards: React.FC = () => {
                 {/* Content */}
                 <div className="relative z-10">
                   {/* Icon */}
-                  <div className="text-6xl mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <div className="text-6xl mb-6 group-hover:scale-110 transition-transform duration-300">
                     {pillar.icon}
                   </div>
 
                   {/* Title */}
-                  <h3 className="text-2xl font-bold text-accent mb-3 group-hover:text-[#52e8c4] transition-colors">
+                  <h3 className="text-2xl md:text-3xl font-bold text-accent mb-4 group-hover:text-blue-500 transition-colors font-heading text-shadow-glow">
                     {pillar.title}
                   </h3>
 
                   {/* Description */}
-                  <p className="text-foreground/70 mb-4 leading-relaxed">
+                  <p className="text-foreground/70 mb-5 leading-relaxed font-body text-shadow-subtle">
                     {pillar.description}
                   </p>
 

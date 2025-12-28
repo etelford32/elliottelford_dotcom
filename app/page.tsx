@@ -43,28 +43,20 @@ export default function Home() {
       <Hero />
 
       {/* Main Content with increased spacing */}
-      <div className="relative space-y-32 lg:space-y-40">
+      <div className="relative space-y-40 lg:space-y-56">
         {/* What I Do - Pillar Cards */}
         <PillarCards />
 
         {/* Quick Links to Internal Content */}
-        <section className="py-20 lg:py-24 relative">
+        <section className="py-24 lg:py-32 relative">
           <div className="container mx-auto px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <div className="inline-block mb-6">
-                <div className="px-8 py-4 bg-accent/10 backdrop-blur-sm border border-accent/30 rounded-2xl">
-                  <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-accent">
-                    Explore More
-                  </h2>
-                </div>
-              </div>
-              <div className="max-w-3xl mx-auto">
-                <div className="px-8 py-5 bg-primary/40 backdrop-blur-sm border border-accent/20 rounded-xl">
-                  <p className="text-lg md:text-xl text-foreground/80 leading-relaxed">
-                    Discover interactive simulations, technical articles, and engineering projects
-                  </p>
-                </div>
-              </div>
+            <div className="text-center mb-20 lg:mb-24 space-y-8">
+              <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-accent font-heading text-shadow-glow tracking-wide">
+                Explore More
+              </h2>
+              <p className="text-xl md:text-2xl text-foreground/80 leading-relaxed max-w-3xl mx-auto font-body text-shadow-subtle">
+                Discover interactive simulations, technical articles, and engineering projects
+              </p>
             </div>
 
             <QuickLinksGrid links={quickLinks} />
