@@ -459,7 +459,7 @@ function ShootingStar({ progress, offset }: { progress: number; offset: THREE.Ve
 }
 
 // Black Hole with Event Horizon and 3D Volumetric Accretion Disk
-function BlackHole() {
+function BlackHole({ enableDopplerShift = true, enableGravitationalLensing = true }: { enableDopplerShift?: boolean; enableGravitationalLensing?: boolean }) {
   const eventHorizonRef = useRef<THREE.Mesh>(null);
   const accretionDiskRef = useRef<THREE.Points>(null);
   const innerDiskRef = useRef<THREE.Points>(null);
@@ -606,6 +606,15 @@ function BlackHole() {
     // Event horizon shader animation with camera position updates
     if (eventHorizonRef.current) {
       const material = eventHorizonRef.current.material as THREE.ShaderMaterial;
+      if (material.uniforms) {
+        material.uniforms.time.value = time;
+        material.uniforms.cameraPosition.value.copy(state.camera.position);
+      }
+    }
+
+    // Update accretion disk shader uniforms
+    if (accretionDiskRef.current) {
+      const material = accretionDiskRef.current.material as THREE.ShaderMaterial;
       if (material.uniforms) {
         material.uniforms.time.value = time;
         material.uniforms.cameraPosition.value.copy(state.camera.position);
@@ -837,6 +846,159 @@ function BlackHole() {
     `
   }), []);
 
+  // Advanced accretion disk shader with Kip Thorne physics
+  const accretionDiskShader = useMemo(() => ({
+    uniforms: {
+      time: { value: 0 },
+      cameraPosition: { value: new THREE.Vector3(3, 2, 6) },
+      enableDoppler: { value: enableDopplerShift },
+      enableLensing: { value: enableGravitationalLensing },
+      blackHoleMass: { value: 1.0 },
+      pixelRatio: { value: typeof window !== 'undefined' ? window.devicePixelRatio : 1 }
+    },
+    vertexShader: `
+      uniform float time;
+      uniform vec3 cameraPosition;
+      uniform float blackHoleMass;
+      uniform bool enableLensing;
+      uniform float pixelRatio;
+
+      attribute vec3 color;
+
+      varying vec3 vColor;
+      varying float vVelocity;
+      varying float vDistance;
+      varying float vLensingFactor;
+
+      // Schwarzschild radius for gravitational calculations
+      const float schwarzschildRadius = 0.75;
+      const float G = 1.0; // Gravitational constant (normalized)
+      const float c = 1.0; // Speed of light (normalized)
+
+      void main() {
+        vColor = color;
+
+        // Calculate distance from black hole center
+        float r = length(position);
+        vDistance = r;
+
+        // Calculate orbital velocity (Keplerian)
+        vec3 tangentialDir = normalize(vec3(-position.y, position.x, 0.0));
+        float orbitalSpeed = sqrt(G * blackHoleMass / r);
+        vec3 velocity = tangentialDir * orbitalSpeed;
+
+        // Store velocity magnitude for Doppler shift
+        vec3 viewDir = normalize(cameraPosition - position);
+        vVelocity = dot(velocity, viewDir);
+
+        vec3 finalPosition = position;
+
+        if (enableLensing) {
+          // Kip Thorne gravitational lensing - light bending
+          // Calculate deflection angle based on impact parameter
+          float impactParameter = r * sin(acos(dot(normalize(position), normalize(cameraPosition))));
+
+          // Einstein deflection angle: α = 4GM/(c²·b)
+          float deflectionAngle = (4.0 * G * blackHoleMass) / (c * c * impactParameter + 0.01);
+
+          // Apply lensing displacement perpendicular to radial direction
+          vec3 radialDir = normalize(position);
+          vec3 perpDir = cross(radialDir, vec3(0.0, 0.0, 1.0));
+          if (length(perpDir) < 0.01) {
+            perpDir = cross(radialDir, vec3(0.0, 1.0, 0.0));
+          }
+          perpDir = normalize(perpDir);
+
+          // Gravitational potential well warping
+          float gravitationalPotential = -G * blackHoleMass / (r + schwarzschildRadius * 0.1);
+          float warpingFactor = gravitationalPotential * 0.15;
+
+          // Frame-dragging effect (Kerr metric) - spacetime rotation
+          float frameDragging = (schwarzschildRadius / r) * sin(time * 0.2 + r);
+
+          // Apply combined gravitational effects
+          finalPosition += perpDir * deflectionAngle * 0.3;
+          finalPosition += radialDir * warpingFactor;
+          finalPosition.xy += vec2(-finalPosition.y, finalPosition.x) * frameDragging * 0.05;
+
+          vLensingFactor = deflectionAngle;
+        } else {
+          vLensingFactor = 0.0;
+        }
+
+        // Project to screen space
+        vec4 mvPosition = modelViewMatrix * vec4(finalPosition, 1.0);
+        gl_Position = projectionMatrix * mvPosition;
+
+        // Point size with distance attenuation
+        float pointSize = (8.0 / -mvPosition.z) * pixelRatio;
+        gl_PointSize = pointSize * (1.0 + vLensingFactor * 0.5);
+      }
+    `,
+    fragmentShader: `
+      uniform float time;
+      uniform bool enableDoppler;
+
+      varying vec3 vColor;
+      varying float vVelocity;
+      varying float vDistance;
+      varying float vLensingFactor;
+
+      const float c = 1.0; // Speed of light
+
+      void main() {
+        // Circular particle shape
+        vec2 center = gl_PointCoord - vec2(0.5);
+        float dist = length(center);
+        if (dist > 0.5) discard;
+
+        // Soft edge
+        float alpha = 1.0 - smoothstep(0.3, 0.5, dist);
+        alpha = pow(alpha, 1.5);
+
+        vec3 finalColor = vColor;
+        float brightness = 1.0;
+
+        if (enableDoppler) {
+          // Relativistic Doppler shift
+          // β = v/c (velocity as fraction of light speed)
+          float beta = vVelocity * 0.5; // Scale velocity
+
+          // Doppler factor: δ = sqrt((1-β)/(1+β))
+          float dopplerFactor = sqrt((1.0 - beta) / (1.0 + beta));
+
+          // Relativistic beaming - approaching side appears much brighter
+          float beamingFactor = 1.0 / pow(dopplerFactor, 3.0);
+          brightness *= (0.3 + beamingFactor * 0.7);
+
+          // Blue-shift approaching, red-shift receding
+          if (beta > 0.0) {
+            // Approaching - blue shift
+            finalColor *= vec3(0.9, 0.95, 1.2);
+          } else {
+            // Receding - red shift
+            finalColor *= vec3(1.2, 0.9, 0.85);
+          }
+        }
+
+        // Gravitational lensing brightness enhancement
+        brightness *= (1.0 + vLensingFactor * 2.0);
+
+        // Glow effect for hot particles
+        float glow = 1.0 - dist * 2.0;
+        glow = pow(glow, 2.0);
+
+        finalColor *= brightness;
+        finalColor += vec3(1.0, 0.95, 0.9) * glow * 0.3;
+
+        gl_FragColor = vec4(finalColor, alpha * 0.85);
+      }
+    `,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending
+  }), [enableDopplerShift, enableGravitationalLensing]);
+
   // Geometries for all disk components
   const diskGeometry = useMemo(() => {
     const geom = new THREE.BufferGeometry();
@@ -880,17 +1042,9 @@ function BlackHole() {
         />
       </mesh>
 
-      {/* Main 3D Volumetric Accretion Disk */}
+      {/* Main 3D Volumetric Accretion Disk with Kip Thorne Physics */}
       <points ref={accretionDiskRef} geometry={diskGeometry}>
-        <pointsMaterial
-          size={0.028}
-          vertexColors
-          transparent
-          opacity={0.85}
-          sizeAttenuation={true}
-          depthWrite={false}
-          blending={THREE.AdditiveBlending}
-        />
+        <shaderMaterial {...accretionDiskShader} />
       </points>
 
       {/* Inner super-hot disk layer */}
@@ -1090,6 +1244,10 @@ export const ThreeJsHero: React.FC = () => {
     target: [number, number, number];
   } | null>(null);
 
+  // Physics toggles
+  const [enableDoppler, setEnableDoppler] = useState(true);
+  const [enableLensing, setEnableLensing] = useState(true);
+
   // Camera preset positions - optimized for dramatic viewing angles
   const presets = {
     default: { position: [3, 2, 6] as [number, number, number], target: [0, 0, 0] as [number, number, number] },
@@ -1198,6 +1356,38 @@ export const ThreeJsHero: React.FC = () => {
             </button>
           </div>
 
+          {/* Physics Controls - Kip Thorne Relativity */}
+          <div className="space-y-3 pt-3 border-t border-accent/20">
+            <h4 className="text-xs text-foreground/60 uppercase tracking-wider font-semibold">Relativistic Physics</h4>
+            <button
+              onClick={() => setEnableDoppler(!enableDoppler)}
+              className={`w-full px-3 py-2.5 border rounded-lg text-xs font-semibold transition-all hover:scale-105 active:scale-95 ${
+                enableDoppler
+                  ? 'bg-accent/30 border-accent text-accent hover:bg-accent/40'
+                  : 'bg-primary/60 border-accent/30 text-foreground hover:bg-accent/20 hover:text-accent'
+              }`}
+              title="Relativistic beaming - approaching side appears brighter"
+            >
+              {enableDoppler ? '✓ Doppler Shift' : '○ Doppler Shift'}
+            </button>
+            <button
+              onClick={() => setEnableLensing(!enableLensing)}
+              className={`w-full px-3 py-2.5 border rounded-lg text-xs font-semibold transition-all hover:scale-105 active:scale-95 ${
+                enableLensing
+                  ? 'bg-accent/30 border-accent text-accent hover:bg-accent/40'
+                  : 'bg-primary/60 border-accent/30 text-foreground hover:bg-accent/20 hover:text-accent'
+              }`}
+              title="Gravitational lensing - light bending around black hole"
+            >
+              {enableLensing ? '✓ Lensing (Kip Thorne)' : '○ Lensing (Kip Thorne)'}
+            </button>
+            <div className="text-xs text-foreground/50 pt-2">
+              <p className="leading-relaxed">
+                Based on "Interstellar" physics by Kip Thorne • Includes frame-dragging, Einstein deflection, and relativistic beaming
+              </p>
+            </div>
+          </div>
+
           {/* Mouse Controls Guide */}
           <div className="space-y-2 pt-3 border-t border-accent/20">
             <h4 className="text-xs text-foreground/60 uppercase tracking-wider font-semibold">Mouse Controls</h4>
@@ -1252,7 +1442,7 @@ export const ThreeJsHero: React.FC = () => {
         dpr={[1, 2]}
       >
         <CameraController autoRotate={autoRotate} cameraPreset={cameraPreset} />
-        <BlackHole />
+        <BlackHole enableDopplerShift={enableDoppler} enableGravitationalLensing={enableLensing} />
         <StarField />
         <ShootingStarTrail />
         <NebulaCloud />
