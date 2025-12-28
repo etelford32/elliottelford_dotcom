@@ -1,13 +1,13 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0a192f;
-  --foreground: #e6f1ff;
-  --primary: #0a192f;
-  --accent: #64ffda;
-  --secondary: #a78bfa;
-  --card-bg: #112240;
-  --card-border: #1e3a5f;
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --primary: #ffffff;
+  --accent: #2563eb;
+  --secondary: #8b5cf6;
+  --card-bg: #f8fafc;
+  --card-border: #e2e8f0;
 }
 
 @theme inline {
@@ -55,7 +55,7 @@ body {
   width: 100%;
   height: 100%;
   z-index: -1;
-  background: linear-gradient(to bottom, #0a192f 0%, #020c1b 100%);
+  background: linear-gradient(to bottom, #ffffff 0%, #f8fafc 100%);
 }
 
 .starfield::before {
@@ -66,11 +66,11 @@ body {
   width: 100%;
   height: 100%;
   background-image:
-    radial-gradient(2px 2px at 20px 30px, rgba(100, 255, 218, 0.3), transparent),
-    radial-gradient(2px 2px at 60px 70px, rgba(167, 139, 250, 0.3), transparent),
-    radial-gradient(1px 1px at 50px 50px, rgba(230, 241, 255, 0.5), transparent),
-    radial-gradient(1px 1px at 130px 80px, rgba(100, 255, 218, 0.2), transparent),
-    radial-gradient(2px 2px at 90px 10px, rgba(167, 139, 250, 0.4), transparent);
+    radial-gradient(2px 2px at 20px 30px, rgba(37, 99, 235, 0.15), transparent),
+    radial-gradient(2px 2px at 60px 70px, rgba(139, 92, 246, 0.15), transparent),
+    radial-gradient(1px 1px at 50px 50px, rgba(15, 23, 42, 0.2), transparent),
+    radial-gradient(1px 1px at 130px 80px, rgba(37, 99, 235, 0.1), transparent),
+    radial-gradient(2px 2px at 90px 10px, rgba(139, 92, 246, 0.12), transparent);
   background-size: 200px 200px;
   background-position: 0 0, 40px 60px, 130px 270px, 70px 100px, 150px 50px;
   animation: twinkle 5s ease-in-out infinite;
@@ -82,7 +82,7 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--primary);
+  background: var(--card-bg);
 }
 
 ::-webkit-scrollbar-thumb {
@@ -91,7 +91,7 @@ body {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #52e8c4;
+  background: #1d4ed8;
 }
 
 /* Enhanced hover lift animation */

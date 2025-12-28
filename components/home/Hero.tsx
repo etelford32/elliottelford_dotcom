@@ -21,79 +21,66 @@ export const Hero: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="text-center max-w-6xl mx-auto space-y-8"
+          className="text-center max-w-6xl mx-auto space-y-16"
         >
-          {/* Greeting Box */}
+          {/* Greeting */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2, duration: 0.8 }}
-            className="inline-block"
           >
-            <div className="px-6 py-3 bg-accent/10 backdrop-blur-sm border border-accent/30 rounded-xl">
-              <p className="text-accent text-lg md:text-xl font-mono">
-                Hi, I'm
-              </p>
-            </div>
+            <p className="text-accent text-lg md:text-xl font-mono">
+              Hi, I'm
+            </p>
           </motion.div>
 
-          {/* Name Box */}
+          {/* Name */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.8 }}
-            className="inline-block"
           >
-            <div className="px-10 py-6 bg-primary/40 backdrop-blur-md border border-accent/20 rounded-2xl shadow-2xl">
-              <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-foreground">
-                Elliot Telford
-              </h1>
-            </div>
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-foreground">
+              Elliot Telford
+            </h1>
           </motion.div>
 
-          {/* Tagline Box */}
+          {/* Tagline */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6, duration: 0.8 }}
             className="max-w-5xl mx-auto"
           >
-            <div className="px-8 py-6 bg-gradient-to-r from-accent/5 via-secondary/5 to-accent/5 backdrop-blur-sm border border-accent/20 rounded-2xl">
-              <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold text-foreground/90 leading-relaxed">
-                Building the Future Through{' '}
-                <span className="text-accent">Code & Physics</span>
-              </h2>
-            </div>
+            <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold text-foreground/90 leading-relaxed">
+              Building the Future Through{' '}
+              <span className="text-accent">Code & Physics</span>
+            </h2>
           </motion.div>
 
-          {/* Description Box */}
+          {/* Description */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8, duration: 0.8 }}
             className="max-w-3xl mx-auto"
           >
-            <div className="px-8 py-4 bg-primary/30 backdrop-blur-sm border border-accent/20 rounded-xl">
-              <p className="text-lg md:text-xl text-foreground/80 leading-relaxed">
-                Game Developer | Computational Astrophysicist | Systems Engineer
-              </p>
-            </div>
+            <p className="text-lg md:text-xl text-foreground/80 leading-relaxed">
+              Game Developer | Computational Astrophysicist | Systems Engineer
+            </p>
           </motion.div>
 
-          {/* Mission Statement with Enhanced Box */}
+          {/* Mission Statement */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 1.0, duration: 0.8 }}
-            className="relative max-w-4xl mx-auto"
+            className="max-w-4xl mx-auto"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-accent/20 via-secondary/20 to-accent/20 blur-3xl opacity-60" />
-            <div className="relative bg-primary/60 backdrop-blur-md border border-accent/30 rounded-2xl px-10 py-8 shadow-2xl">
-              <p className="text-lg md:text-xl lg:text-2xl text-foreground/90 leading-relaxed">
-                Applying science and technology for humanity's optimization as a resilient,{' '}
-                <span className="text-accent font-semibold">interstellar species</span>
-              </p>
-            </div>
+            <p className="text-lg md:text-xl lg:text-2xl text-foreground/90 leading-relaxed">
+              Applying science and technology for humanity's optimization as a resilient,{' '}
+              <span className="text-accent font-semibold">interstellar species</span>
+            </p>
           </motion.div>
 
           {/* CTAs */}
