@@ -9,6 +9,7 @@ function StarField() {
   const ref = useRef<THREE.Points>(null);
   const glowRef = useRef<THREE.Points>(null);
   const { mouse } = useThree();
+  const velocities = useRef<Float32Array>(new Float32Array(15000 * 3));
 
   // Custom shader material for stars with UV duotone edges
   const starMaterial = useMemo(() => {
@@ -181,7 +182,7 @@ function StarField() {
     return { positions, colors, glowPositions, starData };
   }, []);
 
-  // Enhanced rotation with mouse parallax and shader updates
+  // Enhanced rotation with mouse parallax, shader updates, and black hole gravity
   useFrame((state) => {
     const time = state.clock.getElapsedTime();
 
@@ -191,6 +192,64 @@ function StarField() {
       if (material.uniforms) {
         material.uniforms.time.value = time;
       }
+
+      // Apply gravitational pull toward center (black hole)
+      const positionAttr = ref.current.geometry.attributes.position;
+      const positions = positionAttr.array as Float32Array;
+      const vels = velocities.current;
+
+      for (let i = 0; i < positions.length; i += 3) {
+        const x = positions[i];
+        const y = positions[i + 1];
+        const z = positions[i + 2];
+
+        // Calculate distance from center (black hole)
+        const distToCenter = Math.sqrt(x * x + y * y + z * z);
+
+        // Gravitational force (stronger when closer)
+        const gravityStrength = 0.0008;
+        const force = gravityStrength / (distToCenter * distToCenter + 0.1);
+
+        // Direction toward center
+        const dirX = -x / distToCenter;
+        const dirY = -y / distToCenter;
+        const dirZ = -z / distToCenter;
+
+        // Apply force to velocity
+        vels[i] += dirX * force;
+        vels[i + 1] += dirY * force;
+        vels[i + 2] += dirZ * force;
+
+        // Add tangential velocity for orbital motion
+        const orbitalSpeed = 0.002 / Math.sqrt(distToCenter + 0.5);
+        vels[i] += -y * orbitalSpeed;
+        vels[i + 1] += x * orbitalSpeed;
+
+        // Apply velocity damping
+        vels[i] *= 0.998;
+        vels[i + 1] *= 0.998;
+        vels[i + 2] *= 0.998;
+
+        // Update position
+        positions[i] += vels[i];
+        positions[i + 1] += vels[i + 1];
+        positions[i + 2] += vels[i + 2];
+
+        // Reset stars that get too close to event horizon
+        if (distToCenter < 0.8) {
+          const resetRadius = 18 + Math.random() * 2;
+          const theta = Math.random() * Math.PI * 2;
+          const phi = Math.random() * Math.PI;
+          positions[i] = resetRadius * Math.sin(phi) * Math.cos(theta);
+          positions[i + 1] = resetRadius * Math.sin(phi) * Math.sin(theta);
+          positions[i + 2] = resetRadius * Math.cos(phi);
+          vels[i] = 0;
+          vels[i + 1] = 0;
+          vels[i + 2] = 0;
+        }
+      }
+
+      positionAttr.needsUpdate = true;
 
       // Base rotation
       ref.current.rotation.x = time * 0.015 + mouse.y * 0.015;
@@ -399,6 +458,199 @@ function ShootingStar({ progress, offset }: { progress: number; offset: THREE.Ve
   );
 }
 
+// Black Hole with Event Horizon and Accretion Disk
+function BlackHole() {
+  const eventHorizonRef = useRef<THREE.Mesh>(null);
+  const accretionDiskRef = useRef<THREE.Points>(null);
+
+  // Accretion disk particles
+  const { diskPositions, diskColors, diskVelocities } = useMemo(() => {
+    const particleCount = 3000;
+    const diskPositions = new Float32Array(particleCount * 3);
+    const diskColors = new Float32Array(particleCount * 3);
+    const diskVelocities = new Float32Array(particleCount * 3);
+
+    for (let i = 0; i < particleCount; i++) {
+      const i3 = i * 3;
+
+      // Create disk in XY plane
+      const radius = 0.9 + Math.random() * 2.5; // Disk radius from 0.9 to 3.4
+      const angle = Math.random() * Math.PI * 2;
+      const thickness = (Math.random() - 0.5) * 0.15; // Thin disk
+
+      diskPositions[i3] = Math.cos(angle) * radius;
+      diskPositions[i3 + 1] = Math.sin(angle) * radius;
+      diskPositions[i3 + 2] = thickness;
+
+      // Orbital velocity (faster closer to center, Keplerian orbit)
+      const speed = 0.015 / Math.sqrt(radius);
+      diskVelocities[i3] = -Math.sin(angle) * speed;
+      diskVelocities[i3 + 1] = Math.cos(angle) * speed;
+      diskVelocities[i3 + 2] = 0;
+
+      // Hot accretion disk colors - orange/red with Doppler shift
+      // Inner disk is hotter (blue-white), outer is cooler (red-orange)
+      const temp = 1.0 - (radius - 0.9) / 2.5;
+
+      if (temp > 0.8) {
+        // Ultra-hot inner region - blue-white
+        diskColors[i3] = 0.8 + Math.random() * 0.2;
+        diskColors[i3 + 1] = 0.9 + Math.random() * 0.1;
+        diskColors[i3 + 2] = 1.0;
+      } else if (temp > 0.5) {
+        // Hot middle region - white-yellow
+        diskColors[i3] = 1.0;
+        diskColors[i3 + 1] = 0.8 + Math.random() * 0.2;
+        diskColors[i3 + 2] = 0.4 + Math.random() * 0.2;
+      } else {
+        // Cooler outer region - orange-red
+        diskColors[i3] = 1.0;
+        diskColors[i3 + 1] = 0.3 + Math.random() * 0.3;
+        diskColors[i3 + 2] = 0.1 + Math.random() * 0.2;
+      }
+    }
+
+    return { diskPositions, diskColors, diskVelocities };
+  }, []);
+
+  // Animate accretion disk rotation
+  useFrame((state) => {
+    const time = state.clock.getElapsedTime();
+
+    // Event horizon shader animation
+    if (eventHorizonRef.current) {
+      const material = eventHorizonRef.current.material as THREE.ShaderMaterial;
+      if (material.uniforms) {
+        material.uniforms.time.value = time;
+      }
+    }
+
+    // Rotate accretion disk particles
+    if (accretionDiskRef.current) {
+      const posAttr = accretionDiskRef.current.geometry.attributes.position;
+      const positions = posAttr.array as Float32Array;
+
+      for (let i = 0; i < positions.length; i += 3) {
+        const x = positions[i];
+        const y = positions[i + 1];
+        const z = positions[i + 2];
+
+        const radius = Math.sqrt(x * x + y * y);
+        const angle = Math.atan2(y, x);
+
+        // Keplerian orbital speed
+        const speed = 0.015 / Math.sqrt(radius + 0.1);
+        const newAngle = angle + speed;
+
+        // Update position
+        positions[i] = Math.cos(newAngle) * radius;
+        positions[i + 1] = Math.sin(newAngle) * radius;
+
+        // Add slight wobble to thickness
+        positions[i + 2] = z + Math.sin(time * 2 + radius * 10) * 0.002;
+      }
+
+      posAttr.needsUpdate = true;
+    }
+  });
+
+  // Event horizon shader
+  const eventHorizonShader = useMemo(() => ({
+    uniforms: {
+      time: { value: 0 }
+    },
+    vertexShader: `
+      varying vec3 vNormal;
+      varying vec3 vPosition;
+
+      void main() {
+        vNormal = normalize(normalMatrix * normal);
+        vPosition = position;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform float time;
+      varying vec3 vNormal;
+      varying vec3 vPosition;
+
+      void main() {
+        // Event horizon - almost completely black with subtle edge glow
+        vec3 viewDir = normalize(vPosition);
+        float edge = 1.0 - abs(dot(viewDir, vNormal));
+        edge = pow(edge, 3.0);
+
+        // Subtle purple/cyan edge glow (gravitational lensing effect)
+        vec3 edgeColor = mix(
+          vec3(0.4, 0.2, 0.6),
+          vec3(0.2, 0.5, 0.7),
+          sin(time * 0.5 + edge * 10.0) * 0.5 + 0.5
+        );
+
+        // Almost black with very subtle edge
+        vec3 finalColor = vec3(0.01, 0.005, 0.02) + edgeColor * edge * 0.3;
+
+        gl_FragColor = vec4(finalColor, 1.0);
+      }
+    `
+  }), []);
+
+  // Accretion disk geometry
+  const diskGeometry = useMemo(() => {
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.BufferAttribute(diskPositions, 3));
+    geom.setAttribute('color', new THREE.BufferAttribute(diskColors, 3));
+    return geom;
+  }, [diskPositions, diskColors]);
+
+  return (
+    <group>
+      {/* Event Horizon - Black sphere */}
+      <mesh ref={eventHorizonRef}>
+        <sphereGeometry args={[0.75, 64, 64]} />
+        <shaderMaterial {...eventHorizonShader} />
+      </mesh>
+
+      {/* Accretion Disk - Hot rotating particles */}
+      <points ref={accretionDiskRef} geometry={diskGeometry}>
+        <pointsMaterial
+          size={0.035}
+          vertexColors
+          transparent
+          opacity={0.9}
+          sizeAttenuation={true}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </points>
+
+      {/* Inner glow ring */}
+      <mesh rotation={[Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.76, 1.2, 64]} />
+        <meshBasicMaterial
+          color="#ff6b00"
+          transparent
+          opacity={0.15}
+          side={THREE.DoubleSide}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+
+      {/* Outer glow ring */}
+      <mesh rotation={[Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[1.2, 2.0, 64]} />
+        <meshBasicMaterial
+          color="#ff3300"
+          transparent
+          opacity={0.08}
+          side={THREE.DoubleSide}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+    </group>
+  );
+}
+
 function NebulaCloud() {
   const meshRef = useRef<THREE.Mesh>(null);
 
@@ -480,6 +732,7 @@ export const ThreeJsHero: React.FC = () => {
         style={{ background: 'transparent' }}
         dpr={[1, 2]}
       >
+        <BlackHole />
         <StarField />
         <ShootingStarTrail />
         <NebulaCloud />
