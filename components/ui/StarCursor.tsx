@@ -17,9 +17,11 @@ export const StarCursor: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const cursorRef = useRef<HTMLDivElement>(null);
   const [isHovering, setIsHovering] = useState(false);
+  const [isClicked, setIsClicked] = useState(false);
   const particlesRef = useRef<Particle[]>([]);
   const mouseRef = useRef({ x: 0, y: 0 });
   const animationFrameRef = useRef<number | undefined>(undefined);
+  const lastSparkTime = useRef(0);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -37,6 +39,33 @@ export const StarCursor: React.FC = () => {
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
+    // Create radial spark particles
+    const createSpark = (x: number, y: number, burstMode = false) => {
+      const colors = ['#a855f7', '#06b6d4', '#8b5cf6', '#ffffff', '#4ade80'];
+      const sparkCount = burstMode ? 20 : 3; // More sparks on click
+
+      for (let i = 0; i < sparkCount; i++) {
+        const angle = (Math.PI * 2 * i) / sparkCount + (Math.random() - 0.5) * 0.5;
+        const speed = burstMode ? Math.random() * 4 + 3 : Math.random() * 2 + 1.5;
+
+        particlesRef.current.push({
+          x,
+          y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          life: 1,
+          maxLife: 1,
+          size: burstMode ? Math.random() * 4 + 2 : Math.random() * 2.5 + 1,
+          color: colors[Math.floor(Math.random() * colors.length)]
+        });
+      }
+
+      // Limit particles
+      if (particlesRef.current.length > 100) {
+        particlesRef.current = particlesRef.current.slice(-100);
+      }
+    };
+
     // Track mouse position
     const handleMouseMove = (e: MouseEvent) => {
       mouseRef.current = { x: e.clientX, y: e.clientY };
@@ -49,53 +78,42 @@ export const StarCursor: React.FC = () => {
       const target = e.target as HTMLElement;
       const isInteractive = target.closest('a, button, input, textarea, [role="button"]');
       setIsHovering(!!isInteractive);
-
-      // Create particles
-      if (Math.random() > 0.7) {
-        createParticle(e.clientX, e.clientY);
-      }
     };
 
-    const createParticle = (x: number, y: number) => {
-      const angle = Math.random() * Math.PI * 2;
-      const speed = Math.random() * 2 + 1;
-      const colors = ['#a855f7', '#06b6d4', '#8b5cf6', '#ffffff'];
+    // Handle click for burst effect
+    const handleClick = (e: MouseEvent) => {
+      setIsClicked(true);
+      createSpark(e.clientX, e.clientY, true);
 
-      particlesRef.current.push({
-        x,
-        y,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        life: 1,
-        maxLife: 1,
-        size: Math.random() * 3 + 1,
-        color: colors[Math.floor(Math.random() * colors.length)]
-      });
-
-      // Limit particles
-      if (particlesRef.current.length > 50) {
-        particlesRef.current.shift();
-      }
+      setTimeout(() => setIsClicked(false), 200);
     };
 
     // Animation loop
-    const animate = () => {
+    const animate = (currentTime: number) => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Emit sparks continuously (every 50ms)
+      if (currentTime - lastSparkTime.current > 50) {
+        createSpark(mouseRef.current.x, mouseRef.current.y);
+        lastSparkTime.current = currentTime;
+      }
 
       // Update and draw particles
       particlesRef.current = particlesRef.current.filter(particle => {
+        // Fast movement with slight deceleration
         particle.x += particle.vx;
         particle.y += particle.vy;
-        particle.life -= 0.02;
-        particle.vy += 0.05; // Gravity
+        particle.vx *= 0.95; // Deceleration
+        particle.vy *= 0.95;
+        particle.life -= 0.05; // Quick fade (shorter life)
 
         if (particle.life <= 0) return false;
 
-        // Draw particle
+        // Draw particle as a glowing spark
         ctx.save();
-        ctx.globalAlpha = particle.life;
+        ctx.globalAlpha = particle.life * particle.life; // Quadratic fade for sparkle effect
         ctx.fillStyle = particle.color;
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = 15;
         ctx.shadowColor = particle.color;
 
         // Draw star shape
@@ -133,10 +151,12 @@ export const StarCursor: React.FC = () => {
     };
 
     window.addEventListener('mousemove', handleMouseMove);
-    animate();
+    window.addEventListener('click', handleClick);
+    animationFrameRef.current = requestAnimationFrame(animate);
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('click', handleClick);
       window.removeEventListener('resize', resizeCanvas);
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
@@ -153,35 +173,67 @@ export const StarCursor: React.FC = () => {
         style={{ mixBlendMode: 'screen' }}
       />
 
-      {/* Custom cursor */}
+      {/* Custom cursor - Always visible star */}
       <div
         ref={cursorRef}
-        className={`fixed w-8 h-8 pointer-events-none z-[9999] transition-all duration-300 ${
+        className={`fixed pointer-events-none z-[9999] transition-all duration-200 ${
           isHovering ? 'scale-150' : 'scale-100'
-        }`}
+        } ${isClicked ? 'scale-[2]' : ''}`}
         style={{
           transform: 'translate(-50%, -50%)',
+          width: '32px',
+          height: '32px',
         }}
       >
-        {/* Center dot */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div
-            className={`w-2 h-2 rounded-full transition-all duration-300 ${
-              isHovering
-                ? 'bg-green-400 shadow-[0_0_20px_rgba(74,222,128,0.8),0_0_40px_rgba(74,222,128,0.6)]'
-                : 'bg-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.6)]'
-            }`}
-          />
-        </div>
+        {/* Central star - always visible */}
+        <svg
+          className="absolute inset-0 w-full h-full"
+          viewBox="0 0 32 32"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          {/* Outer glow */}
+          <defs>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+              <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
 
-        {/* Outer ring */}
+          {/* Star shape */}
+          <path
+            d="M16 2 L19 13 L30 16 L19 19 L16 30 L13 19 L2 16 L13 13 Z"
+            fill={isHovering ? '#4ade80' : '#a855f7'}
+            filter="url(#glow)"
+            className={`transition-all duration-300 ${isClicked ? 'opacity-100' : 'opacity-90'}`}
+          />
+
+          {/* Inner bright core */}
+          <circle
+            cx="16"
+            cy="16"
+            r="3"
+            fill="white"
+            opacity="0.8"
+          />
+        </svg>
+
+        {/* Pulsing rings */}
         <div
           className={`absolute inset-0 rounded-full border-2 transition-all duration-300 ${
             isHovering
               ? 'border-green-400 shadow-[0_0_30px_rgba(74,222,128,0.8),0_0_60px_rgba(74,222,128,0.4)] animate-ping'
-              : 'border-purple-400/50'
+              : 'border-purple-400/30 shadow-[0_0_15px_rgba(168,85,247,0.6)]'
           }`}
         />
+
+        {/* Click burst ring */}
+        {isClicked && (
+          <div className="absolute inset-0 rounded-full border-4 border-green-400 animate-ping opacity-75" />
+        )}
 
         {/* Hover glow effect */}
         {isHovering && (
