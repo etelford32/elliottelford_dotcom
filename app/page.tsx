@@ -42,19 +42,19 @@ export default function Home() {
       {/* Hero Section with Three.js Background */}
       <Hero />
 
-      {/* Main Content with increased spacing */}
-      <div className="relative space-y-40 lg:space-y-56">
+      {/* Main Content with massively increased spacing */}
+      <div className="relative space-y-56 lg:space-y-72">
         {/* What I Do - Pillar Cards */}
         <PillarCards />
 
         {/* Quick Links to Internal Content */}
-        <section className="py-24 lg:py-32 relative">
+        <section className="py-32 lg:py-40 relative">
           <div className="container mx-auto px-6 lg:px-8">
-            <div className="text-center mb-20 lg:mb-24 space-y-8">
-              <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-accent font-heading text-shadow-glow tracking-wide">
+            <div className="text-center mb-24 lg:mb-32 space-y-10">
+              <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold text-accent font-heading text-shadow-glow tracking-wide">
                 Explore More
               </h2>
-              <p className="text-xl md:text-2xl text-foreground/80 leading-relaxed max-w-3xl mx-auto font-body text-shadow-subtle">
+              <p className="text-2xl md:text-3xl text-foreground/80 leading-relaxed max-w-4xl mx-auto font-body text-shadow-subtle text-center">
                 Discover interactive simulations, technical articles, and engineering projects
               </p>
             </div>

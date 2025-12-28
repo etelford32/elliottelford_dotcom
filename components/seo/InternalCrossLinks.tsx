@@ -17,7 +17,7 @@ interface QuickLink {
 
 export const QuickLinksGrid: React.FC<{ links: QuickLink[] }> = ({ links }) => {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 lg:gap-12">
       {links.map((link, index) => (
         <motion.div
           key={link.href}
@@ -27,28 +27,28 @@ export const QuickLinksGrid: React.FC<{ links: QuickLink[] }> = ({ links }) => {
           transition={{ duration: 0.5, delay: index * 0.1 }}
         >
           <Link href={link.href} className="group block">
-            <div className="relative h-full p-8 bg-primary/40 backdrop-blur-sm border border-accent/20 rounded-2xl hover:border-accent/40 transition-all duration-300 hover:shadow-xl hover:shadow-accent/10 hover:-translate-y-2">
+            <div className="relative h-full p-10 bg-primary/40 backdrop-blur-sm border border-accent/20 rounded-2xl hover:border-accent/40 transition-all duration-300 hover:shadow-xl hover:shadow-accent/10 hover:-translate-y-2">
               {/* Glow effect on hover */}
               <div className={`absolute inset-0 bg-gradient-to-br from-${link.color}/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl`} />
 
-              <div className="relative space-y-4">
+              <div className="relative space-y-6 text-center">
                 {/* Icon */}
-                <div className="text-5xl group-hover:scale-110 transition-transform">
+                <div className="text-6xl group-hover:scale-110 transition-transform">
                   {link.icon}
                 </div>
 
                 {/* Title */}
-                <h3 className={`text-xl font-bold text-${link.color} group-hover:text-accent transition-colors`}>
+                <h3 className={`text-2xl font-bold text-${link.color} group-hover:text-accent transition-colors font-heading text-shadow-glow`}>
                   {link.title}
                 </h3>
 
                 {/* Description */}
-                <p className="text-foreground/70 leading-relaxed">
+                <p className="text-foreground/70 leading-relaxed text-center font-body text-shadow-subtle">
                   {link.description}
                 </p>
 
                 {/* Arrow */}
-                <div className="flex items-center text-accent text-sm font-medium pt-2 group-hover:translate-x-2 transition-transform">
+                <div className="flex items-center justify-center text-accent text-sm font-medium pt-2 group-hover:translate-x-2 transition-transform">
                   <span>Explore</span>
                   <svg
                     className="w-4 h-4 ml-2"
@@ -230,26 +230,24 @@ export const CTABanner: React.FC<CTABannerProps> = ({
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      className="relative group my-20"
+      className="relative group my-32"
     >
       {/* Glow */}
       <div className="absolute inset-0 bg-gradient-to-r from-accent/20 via-secondary/20 to-accent/20 blur-3xl opacity-60 group-hover:opacity-80 transition-opacity" />
 
       {/* Card */}
-      <div className="relative bg-primary/60 backdrop-blur-md border border-accent/30 rounded-3xl p-10 lg:p-16">
-        <div className="max-w-4xl mx-auto text-center space-y-8">
+      <div className="relative bg-primary/60 backdrop-blur-md border border-accent/30 rounded-3xl p-16 lg:p-24">
+        <div className="max-w-5xl mx-auto text-center space-y-12">
           {/* Title */}
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-accent">
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-accent font-heading text-shadow-glow tracking-wide">
             {title}
           </h2>
 
           {/* Description */}
-          <div className="max-w-2xl mx-auto">
-            <div className="px-8 py-5 bg-primary/40 backdrop-blur-sm border border-accent/20 rounded-xl">
-              <p className="text-lg md:text-xl text-foreground/80 leading-relaxed">
-                {description}
-              </p>
-            </div>
+          <div className="max-w-3xl mx-auto">
+            <p className="text-xl md:text-2xl text-foreground/80 leading-relaxed text-center font-body text-shadow-subtle">
+              {description}
+            </p>
           </div>
 
           {/* Links */}
