@@ -10,14 +10,75 @@ function StarField() {
   const glowRef = useRef<THREE.Points>(null);
   const { mouse } = useThree();
 
-  // Generate star positions with darker colors for white background
+  // Custom shader material for stars
+  const starMaterial = useMemo(() => {
+    return new THREE.ShaderMaterial({
+      uniforms: {
+        time: { value: 0 },
+        pixelRatio: { value: window.devicePixelRatio }
+      },
+      vertexShader: `
+        uniform float time;
+        uniform float pixelRatio;
+        attribute vec3 color;
+        varying vec3 vColor;
+        varying float vIntensity;
+
+        void main() {
+          vColor = color;
+
+          // Pulsating effect based on position
+          float pulse = sin(time * 2.0 + position.x * 0.5 + position.y * 0.3) * 0.5 + 0.5;
+          vIntensity = 0.6 + pulse * 0.4;
+
+          vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+
+          // Size based on depth and pulse
+          float size = (8.0 / -mvPosition.z) * pixelRatio;
+          size *= (0.8 + pulse * 0.4);
+
+          gl_PointSize = size;
+          gl_Position = projectionMatrix * mvPosition;
+        }
+      `,
+      fragmentShader: `
+        varying vec3 vColor;
+        varying float vIntensity;
+
+        void main() {
+          // Create circular stars with soft edges
+          vec2 center = gl_PointCoord - vec2(0.5);
+          float dist = length(center);
+
+          // Soft falloff for glow effect
+          float alpha = 1.0 - smoothstep(0.0, 0.5, dist);
+          alpha = pow(alpha, 1.5);
+
+          // Core brightness
+          float core = 1.0 - smoothstep(0.0, 0.2, dist);
+          core = pow(core, 3.0);
+
+          // Combine glow and core
+          vec3 finalColor = vColor * (alpha + core * 1.5);
+          float finalAlpha = (alpha * 0.85 + core) * vIntensity;
+
+          gl_FragColor = vec4(finalColor, finalAlpha);
+        }
+      `,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
+    });
+  }, []);
+
+  // Generate star positions with MUCH darker, more dramatic colors
   const { positions, colors, glowPositions, starData } = useMemo(() => {
     const positions = new Float32Array(15000 * 3);
     const colors = new Float32Array(15000 * 3);
     const glowPositions = new Float32Array(400 * 3);
     const starData: Array<{ x: number; y: number; z: number }> = [];
 
-    // Main starfield with darker colors
+    // Main starfield with much darker, more vibrant colors
     for (let i = 0; i < 15000; i++) {
       const i3 = i * 3;
 
@@ -39,25 +100,30 @@ function StarField() {
         starData.push({ x, y, z });
       }
 
-      // Darker color variation for white background
+      // MUCH darker, more dramatic color variation
       const colorVariation = Math.random();
       const starType = Math.random();
 
-      if (starType > 0.9) {
-        // Deep purple stars
-        colors[i3] = 0.4 + colorVariation * 0.2;
-        colors[i3 + 1] = 0.2 + colorVariation * 0.2;
-        colors[i3 + 2] = 0.6 + colorVariation * 0.3;
+      if (starType > 0.95) {
+        // Brilliant purple stars
+        colors[i3] = 0.5 + colorVariation * 0.3;
+        colors[i3 + 1] = 0.1 + colorVariation * 0.2;
+        colors[i3 + 2] = 0.8 + colorVariation * 0.2;
+      } else if (starType > 0.85) {
+        // Brilliant blue stars
+        colors[i3] = 0.1 + colorVariation * 0.15;
+        colors[i3 + 1] = 0.4 + colorVariation * 0.3;
+        colors[i3 + 2] = 0.95 + colorVariation * 0.05;
       } else if (starType > 0.7) {
-        // Deep blue stars
-        colors[i3] = 0.1 + colorVariation * 0.2;
-        colors[i3 + 1] = 0.3 + colorVariation * 0.3;
-        colors[i3 + 2] = 0.7 + colorVariation * 0.2;
+        // Cyan stars
+        colors[i3] = 0.15 + colorVariation * 0.2;
+        colors[i3 + 1] = 0.6 + colorVariation * 0.25;
+        colors[i3 + 2] = 0.85 + colorVariation * 0.15;
       } else {
-        // Dark gray-blue stars
-        colors[i3] = 0.2 + colorVariation * 0.3;
-        colors[i3 + 1] = 0.3 + colorVariation * 0.3;
-        colors[i3 + 2] = 0.4 + colorVariation * 0.3;
+        // Deep blue-gray stars (darker majority)
+        colors[i3] = 0.15 + colorVariation * 0.15;
+        colors[i3 + 1] = 0.25 + colorVariation * 0.2;
+        colors[i3 + 2] = 0.45 + colorVariation * 0.25;
       }
     }
 
@@ -76,10 +142,16 @@ function StarField() {
     return { positions, colors, glowPositions, starData };
   }, []);
 
-  // Enhanced rotation with mouse parallax
+  // Enhanced rotation with mouse parallax and shader updates
   useFrame((state) => {
+    const time = state.clock.getElapsedTime();
+
     if (ref.current) {
-      const time = state.clock.getElapsedTime();
+      // Update shader time uniform
+      const material = ref.current.material as THREE.ShaderMaterial;
+      if (material.uniforms) {
+        material.uniforms.time.value = time;
+      }
 
       // Base rotation
       ref.current.rotation.x = time * 0.015 + mouse.y * 0.015;
@@ -90,14 +162,13 @@ function StarField() {
       ref.current.position.y = Math.cos(time * 0.12) * 0.08;
     }
 
-    // Enhanced pulsing glow effect
+    // Enhanced pulsing glow effect with more dramatic pulsing
     if (glowRef.current) {
-      const time = state.clock.getElapsedTime();
       glowRef.current.rotation.x = time * 0.01 - mouse.y * 0.02;
       glowRef.current.rotation.y = time * 0.02 - mouse.x * 0.02;
 
-      // Dynamic pulse scale
-      const scale = 1 + Math.sin(time * 0.6) * 0.12 + Math.cos(time * 0.25) * 0.04;
+      // More dramatic pulse scale
+      const scale = 1 + Math.sin(time * 0.8) * 0.2 + Math.cos(time * 0.3) * 0.08;
       glowRef.current.scale.setScalar(scale);
 
       // Mouse interaction
@@ -106,31 +177,29 @@ function StarField() {
     }
   });
 
+  // Create geometry with attributes
+  const geometry = useMemo(() => {
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    return geom;
+  }, [positions, colors]);
+
   return (
     <>
-      {/* Main starfield */}
-      <Points ref={ref} positions={positions} stride={3} frustumCulled={false}>
-        <PointMaterial
-          transparent
-          vertexColors
-          size={0.018}
-          sizeAttenuation={true}
-          depthWrite={false}
-          opacity={0.85}
-          blending={THREE.NormalBlending}
-        />
-      </Points>
+      {/* Main starfield with custom shader */}
+      <points ref={ref} frustumCulled={false} geometry={geometry} material={starMaterial} />
 
-      {/* Glowing accent stars */}
+      {/* Glowing accent stars with enhanced brightness */}
       <Points ref={glowRef} positions={glowPositions} stride={3} frustumCulled={false}>
         <PointMaterial
           transparent
-          color="#2563eb"
-          size={0.055}
+          color="#3b82f6"
+          size={0.08}
           sizeAttenuation={true}
           depthWrite={false}
-          opacity={0.7}
-          blending={THREE.NormalBlending}
+          opacity={0.9}
+          blending={THREE.AdditiveBlending}
         />
       </Points>
 

@@ -3,9 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { NAVIGATION_LINKS, EXTERNAL_NAVIGATION_LINKS, SITE_NAME } from '@/lib/constants';
+import { NAVIGATION_LINKS, EXTERNAL_NAVIGATION_LINKS } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { MobileNav } from './MobileNav';
+import { SpaceshipLogo } from '@/components/ui/SpaceshipLogo';
 
 export const Header: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -33,19 +34,27 @@ export const Header: React.FC = () => {
       >
         <nav className="container mx-auto px-6 lg:px-8 py-6 lg:py-8">
           <div className="flex items-center justify-between">
-            {/* Logo with PRO Badge */}
+            {/* Logo with Spaceship */}
             <Link
               href="/"
-              className="flex items-center gap-3 group"
+              className="flex items-center gap-4 group"
             >
-              <span className="text-2xl lg:text-3xl font-bold text-accent hover:text-[#52e8c4] transition-colors">
-                {SITE_NAME}
-              </span>
-              <span className="relative">
+              <div className="w-24 h-10 lg:w-32 lg:h-12">
+                <SpaceshipLogo />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xl lg:text-2xl font-bold text-accent group-hover:text-blue-500 transition-colors font-display tracking-tight">
+                  TELFORD
+                </span>
+                <span className="text-sm lg:text-base font-semibold text-foreground/70 group-hover:text-accent transition-colors font-heading tracking-wider">
+                  PROJECTS
+                </span>
+              </div>
+              <span className="relative hidden sm:inline-block">
                 {/* Animated gradient border */}
                 <span className="absolute inset-0 bg-gradient-to-r from-accent via-secondary to-accent bg-[length:200%_100%] animate-[shimmer_3s_linear_infinite] rounded-full blur-sm opacity-75" />
                 {/* PRO Badge */}
-                <span className="relative inline-block px-3 py-1 text-xs font-bold tracking-wider bg-gradient-to-r from-accent to-secondary text-primary rounded-full border border-accent/50 group-hover:scale-110 transition-transform">
+                <span className="relative inline-block px-3 py-1 text-xs font-bold tracking-wider bg-gradient-to-r from-accent to-secondary text-white rounded-full border border-accent/50 group-hover:scale-110 transition-transform">
                   PRO
                 </span>
               </span>

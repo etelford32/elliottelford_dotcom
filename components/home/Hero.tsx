@@ -30,7 +30,7 @@ export const Hero: React.FC = () => {
             transition={{ delay: 0.2, duration: 0.8 }}
           >
             <p className="text-accent text-xl md:text-2xl font-mono text-shadow-glow tracking-wider">
-              Hi, I'm
+              Welcome to
             </p>
           </motion.div>
 
@@ -41,7 +41,7 @@ export const Hero: React.FC = () => {
             transition={{ delay: 0.4, duration: 0.8 }}
           >
             <h1 className="text-6xl md:text-8xl lg:text-9xl font-bold text-foreground font-display text-3d tracking-tight">
-              ELLIOT TELFORD
+              TELFORD PROJECTS
             </h1>
           </motion.div>
 
@@ -66,7 +66,7 @@ export const Hero: React.FC = () => {
             className="max-w-3xl mx-auto"
           >
             <p className="text-xl md:text-2xl text-foreground/80 leading-relaxed font-body text-shadow-subtle tracking-wide">
-              Game Developer | Computational Astrophysicist | Systems Engineer
+              Founded by <span className="text-accent font-semibold">Elliot Telford</span> | Game Development | Computational Astrophysics | Systems Engineering
             </p>
           </motion.div>
 
