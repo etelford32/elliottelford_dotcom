@@ -2,7 +2,7 @@
 
 import React, { useRef, useMemo, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Points, PointMaterial, Line } from '@react-three/drei';
+import { Points, PointMaterial, Line, OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 
 function StarField() {
@@ -724,14 +724,78 @@ function NebulaCloud() {
   );
 }
 
+// Camera Controls Component
+function CameraController() {
+  return (
+    <OrbitControls
+      enableZoom={true}
+      enablePan={true}
+      enableRotate={true}
+      minDistance={2}
+      maxDistance={15}
+      zoomSpeed={0.5}
+      panSpeed={0.5}
+      rotateSpeed={0.3}
+    />
+  );
+}
+
 export const ThreeJsHero: React.FC = () => {
+  const [showControls, setShowControls] = useState(true);
+
   return (
     <div className="absolute inset-0 -z-10">
+      {/* 3D Camera Controls UI */}
+      {showControls && (
+        <div className="absolute top-6 left-6 z-10 bg-primary/80 backdrop-blur-md border border-accent/30 rounded-lg p-4 space-y-3 font-mono text-sm pointer-events-auto">
+          <div className="flex items-center justify-between gap-4 mb-2">
+            <h3 className="text-accent font-semibold text-base">3D Camera Controls</h3>
+            <button
+              onClick={() => setShowControls(false)}
+              className="text-foreground/50 hover:text-foreground transition-colors"
+              aria-label="Close controls"
+            >
+              ✕
+            </button>
+          </div>
+          <div className="space-y-2 text-foreground/80">
+            <div className="flex items-center gap-3">
+              <span className="text-accent font-semibold min-w-[80px]">Rotate:</span>
+              <span className="text-xs">Left Click + Drag</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-accent font-semibold min-w-[80px]">Pan:</span>
+              <span className="text-xs">Right Click + Drag</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-accent font-semibold min-w-[80px]">Zoom:</span>
+              <span className="text-xs">Scroll Wheel</span>
+            </div>
+          </div>
+          <div className="pt-2 border-t border-accent/20">
+            <p className="text-xs text-foreground/60">
+              Explore the black hole in full 3D space
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Toggle button when controls are hidden */}
+      {!showControls && (
+        <button
+          onClick={() => setShowControls(true)}
+          className="absolute top-6 left-6 z-10 bg-primary/80 backdrop-blur-md border border-accent/30 rounded-lg px-4 py-2 font-mono text-sm text-accent hover:bg-primary/90 transition-colors pointer-events-auto"
+        >
+          Show Controls
+        </button>
+      )}
+
       <Canvas
-        camera={{ position: [0, 0, 1], fov: 75 }}
+        camera={{ position: [0, 0, 5], fov: 75 }}
         style={{ background: 'transparent' }}
         dpr={[1, 2]}
       >
+        <CameraController />
         <BlackHole />
         <StarField />
         <ShootingStarTrail />
