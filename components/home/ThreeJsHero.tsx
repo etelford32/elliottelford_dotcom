@@ -603,11 +603,12 @@ function BlackHole() {
   useFrame((state) => {
     const time = state.clock.getElapsedTime();
 
-    // Event horizon shader animation
+    // Event horizon shader animation with camera position updates
     if (eventHorizonRef.current) {
       const material = eventHorizonRef.current.material as THREE.ShaderMaterial;
       if (material.uniforms) {
         material.uniforms.time.value = time;
+        material.uniforms.cameraPosition.value.copy(state.camera.position);
       }
     }
 
@@ -741,41 +742,95 @@ function BlackHole() {
     }
   });
 
-  // Event horizon shader
+  // Enhanced event horizon shader with gravitational lensing
   const eventHorizonShader = useMemo(() => ({
     uniforms: {
-      time: { value: 0 }
+      time: { value: 0 },
+      cameraPosition: { value: new THREE.Vector3(0, 0, 5) }
     },
     vertexShader: `
+      uniform float time;
       varying vec3 vNormal;
       varying vec3 vPosition;
+      varying vec3 vWorldPosition;
+      varying float vDistortion;
 
       void main() {
         vNormal = normalize(normalMatrix * normal);
         vPosition = position;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+
+        // World position for lensing calculations
+        vec4 worldPos = modelMatrix * vec4(position, 1.0);
+        vWorldPosition = worldPos.xyz;
+
+        // Gravitational distortion effect
+        float distortionAmount = 0.02;
+        float pulse = sin(time * 0.5) * 0.5 + 0.5;
+        vDistortion = pulse;
+
+        // Slight vertex displacement for warping effect
+        vec3 distortedPosition = position + normal * distortionAmount * pulse * 0.1;
+
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(distortedPosition, 1.0);
       }
     `,
     fragmentShader: `
       uniform float time;
+      uniform vec3 cameraPosition;
       varying vec3 vNormal;
       varying vec3 vPosition;
+      varying vec3 vWorldPosition;
+      varying float vDistortion;
 
       void main() {
-        // Event horizon - almost completely black with subtle edge glow
-        vec3 viewDir = normalize(vPosition);
-        float edge = 1.0 - abs(dot(viewDir, vNormal));
-        edge = pow(edge, 3.0);
+        // Calculate view direction
+        vec3 viewDir = normalize(cameraPosition - vWorldPosition);
 
-        // Subtle purple/cyan edge glow (gravitational lensing effect)
-        vec3 edgeColor = mix(
-          vec3(0.4, 0.2, 0.6),
-          vec3(0.2, 0.5, 0.7),
-          sin(time * 0.5 + edge * 10.0) * 0.5 + 0.5
-        );
+        // Fresnel effect for edge glow (stronger at glancing angles)
+        float fresnel = 1.0 - abs(dot(viewDir, vNormal));
+        fresnel = pow(fresnel, 2.5);
 
-        // Almost black with very subtle edge
-        vec3 finalColor = vec3(0.01, 0.005, 0.02) + edgeColor * edge * 0.3;
+        // Gravitational lensing ring - appears at edge
+        float lensingRing = smoothstep(0.4, 0.6, fresnel) - smoothstep(0.6, 0.8, fresnel);
+        lensingRing *= 1.5;
+
+        // Color shifting based on angle and time
+        float angleShift = atan(vPosition.y, vPosition.x) / 3.14159;
+        float timeShift = sin(time * 0.3) * 0.5 + 0.5;
+
+        // Multi-color gravitational lensing effect
+        vec3 lensingColor1 = vec3(0.5, 0.3, 0.9); // Purple
+        vec3 lensingColor2 = vec3(0.2, 0.6, 1.0); // Cyan
+        vec3 lensingColor3 = vec3(0.9, 0.4, 0.7); // Magenta
+
+        // Mix colors based on position and time
+        vec3 colorA = mix(lensingColor1, lensingColor2, sin(angleShift + time * 0.2) * 0.5 + 0.5);
+        vec3 colorB = mix(lensingColor2, lensingColor3, cos(angleShift - time * 0.15) * 0.5 + 0.5);
+        vec3 edgeColor = mix(colorA, colorB, timeShift);
+
+        // Enhanced edge glow with lensing
+        float edgeGlow = pow(fresnel, 1.8) * 0.4;
+
+        // Photon sphere visualization (bright ring just outside event horizon)
+        float photonSphere = smoothstep(0.55, 0.65, fresnel) * smoothstep(0.75, 0.65, fresnel);
+        photonSphere *= (sin(time * 2.0 + angleShift * 10.0) * 0.3 + 0.7);
+
+        // Almost pure black core with increasing brightness at edges
+        vec3 coreColor = vec3(0.005, 0.003, 0.01);
+
+        // Build final color with layers
+        vec3 finalColor = coreColor;
+        finalColor += edgeColor * edgeGlow;
+        finalColor += edgeColor * lensingRing * 1.2;
+        finalColor += vec3(1.0, 0.9, 0.8) * photonSphere * 0.8; // Bright photon sphere
+
+        // Add subtle noise/static near event horizon
+        float noise = fract(sin(dot(vPosition.xy, vec2(12.9898, 78.233)) + time) * 43758.5453);
+        finalColor += noise * 0.02 * fresnel;
+
+        // Hawking radiation subtle glow
+        float hawkingGlow = pow(fresnel, 4.0) * 0.15 * (sin(time * 3.0) * 0.5 + 0.5);
+        finalColor += vec3(0.8, 0.9, 1.0) * hawkingGlow;
 
         gl_FragColor = vec4(finalColor, 1.0);
       }
@@ -806,10 +861,23 @@ function BlackHole() {
 
   return (
     <group>
-      {/* Event Horizon - Black sphere */}
+      {/* Event Horizon - Black sphere with high detail for smooth lensing */}
       <mesh ref={eventHorizonRef}>
-        <sphereGeometry args={[0.75, 64, 64]} />
-        <shaderMaterial {...eventHorizonShader} />
+        <sphereGeometry args={[0.75, 128, 128]} />
+        <shaderMaterial
+          {...eventHorizonShader}
+          side={THREE.FrontSide}
+        />
+      </mesh>
+
+      {/* Shadow sphere - deeper black inner core */}
+      <mesh>
+        <sphereGeometry args={[0.73, 64, 64]} />
+        <meshBasicMaterial
+          color="#000000"
+          transparent
+          opacity={0.95}
+        />
       </mesh>
 
       {/* Main 3D Volumetric Accretion Disk */}
@@ -987,24 +1055,30 @@ function CameraController({
   });
 
   return (
-    <OrbitControls
-      ref={controlsRef}
-      enableZoom={true}
-      enablePan={true}
-      enableRotate={true}
-      autoRotate={autoRotate}
-      autoRotateSpeed={0.5}
-      minDistance={1.5}
-      maxDistance={20}
-      zoomSpeed={0.8}
-      panSpeed={0.8}
-      rotateSpeed={0.5}
-      enableDamping={true}
-      dampingFactor={0.05}
-      screenSpacePanning={true}
-      minPolarAngle={0}
-      maxPolarAngle={Math.PI}
-    />
+    <>
+      <OrbitControls
+        ref={controlsRef}
+        enableZoom={true}
+        enablePan={true}
+        enableRotate={true}
+        autoRotate={autoRotate}
+        autoRotateSpeed={0.3}
+        minDistance={1.5}
+        maxDistance={20}
+        zoomSpeed={1.0}
+        panSpeed={1.0}
+        rotateSpeed={0.6}
+        enableDamping={true}
+        dampingFactor={0.08}
+        screenSpacePanning={true}
+        minPolarAngle={0}
+        maxPolarAngle={Math.PI}
+      />
+      {/* Ambient lighting for better depth perception */}
+      <ambientLight intensity={0.15} color="#6366f1" />
+      <pointLight position={[10, 10, 10]} intensity={0.3} color="#8b5cf6" />
+      <pointLight position={[-10, -10, -10]} intensity={0.2} color="#06b6d4" />
+    </>
   );
 }
 
@@ -1016,15 +1090,16 @@ export const ThreeJsHero: React.FC = () => {
     target: [number, number, number];
   } | null>(null);
 
-  // Camera preset positions
+  // Camera preset positions - optimized for dramatic viewing angles
   const presets = {
-    default: { position: [0, 0, 5] as [number, number, number], target: [0, 0, 0] as [number, number, number] },
-    top: { position: [0, 8, 0] as [number, number, number], target: [0, 0, 0] as [number, number, number] },
-    side: { position: [8, 0, 0] as [number, number, number], target: [0, 0, 0] as [number, number, number] },
+    default: { position: [3, 2, 6] as [number, number, number], target: [0, 0, 0] as [number, number, number] },
+    top: { position: [0, 10, 0.5] as [number, number, number], target: [0, 0, 0] as [number, number, number] },
+    side: { position: [8, 0.5, 0] as [number, number, number], target: [0, 0, 0] as [number, number, number] },
     front: { position: [0, 0, 8] as [number, number, number], target: [0, 0, 0] as [number, number, number] },
-    isometric: { position: [6, 6, 6] as [number, number, number], target: [0, 0, 0] as [number, number, number] },
-    closeup: { position: [0, 0, 2.5] as [number, number, number], target: [0, 0, 0] as [number, number, number] },
-    wide: { position: [0, 0, 12] as [number, number, number], target: [0, 0, 0] as [number, number, number] },
+    isometric: { position: [7, 7, 7] as [number, number, number], target: [0, 0, 0] as [number, number, number] },
+    closeup: { position: [1.2, 0.8, 2] as [number, number, number], target: [0, 0, 0] as [number, number, number] },
+    wide: { position: [0, 3, 15] as [number, number, number], target: [0, 0, 0] as [number, number, number] },
+    dramatic: { position: [5, 3, 4] as [number, number, number], target: [0, 0, 0] as [number, number, number] },
   };
 
   const handlePreset = (preset: keyof typeof presets) => {
@@ -1092,6 +1167,12 @@ export const ThreeJsHero: React.FC = () => {
                 className="px-3 py-2 bg-primary/60 hover:bg-accent/20 border border-accent/30 rounded-lg text-xs text-foreground hover:text-accent transition-all hover:scale-105 active:scale-95"
               >
                 🔍 Close-up
+              </button>
+              <button
+                onClick={() => handlePreset('dramatic')}
+                className="px-3 py-2 bg-primary/60 hover:bg-accent/20 border border-accent/30 rounded-lg text-xs text-foreground hover:text-accent transition-all hover:scale-105 active:scale-95"
+              >
+                ⚡ Dramatic
               </button>
             </div>
           </div>
@@ -1165,7 +1246,7 @@ export const ThreeJsHero: React.FC = () => {
       )}
 
       <Canvas
-        camera={{ position: [0, 0, 5], fov: 75 }}
+        camera={{ position: [3, 2, 6], fov: 70 }}
         style={{ background: 'transparent', cursor: 'grab' }}
         className="touch-none"
         dpr={[1, 2]}
