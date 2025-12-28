@@ -458,62 +458,148 @@ function ShootingStar({ progress, offset }: { progress: number; offset: THREE.Ve
   );
 }
 
-// Black Hole with Event Horizon and Accretion Disk
+// Black Hole with Event Horizon and 3D Volumetric Accretion Disk
 function BlackHole() {
   const eventHorizonRef = useRef<THREE.Mesh>(null);
   const accretionDiskRef = useRef<THREE.Points>(null);
+  const innerDiskRef = useRef<THREE.Points>(null);
+  const polarJetsRef = useRef<THREE.Points>(null);
 
-  // Accretion disk particles
-  const { diskPositions, diskColors, diskVelocities } = useMemo(() => {
-    const particleCount = 3000;
+  // 3D Volumetric Accretion disk particles with full physics
+  const { diskPositions, diskColors, diskData } = useMemo(() => {
+    const particleCount = 8000; // Increased for density
     const diskPositions = new Float32Array(particleCount * 3);
     const diskColors = new Float32Array(particleCount * 3);
-    const diskVelocities = new Float32Array(particleCount * 3);
+    const diskData: Array<{
+      radius: number;
+      angle: number;
+      verticalPhase: number;
+      turbulence: number;
+      speed: number;
+    }> = [];
 
     for (let i = 0; i < particleCount; i++) {
       const i3 = i * 3;
 
-      // Create disk in XY plane
+      // Create 3D volumetric disk with realistic thickness distribution
       const radius = 0.9 + Math.random() * 2.5; // Disk radius from 0.9 to 3.4
       const angle = Math.random() * Math.PI * 2;
-      const thickness = (Math.random() - 0.5) * 0.15; // Thin disk
+
+      // 3D thickness with density falloff (Gaussian distribution)
+      // Inner disk is thinner, outer disk has more vertical structure
+      const maxThickness = 0.08 + (radius - 0.9) / 2.5 * 0.25; // Increases with radius
+      const thicknessRandom = (Math.random() - 0.5) * 2; // -1 to 1
+      // Use power law for density concentration toward midplane
+      const verticalDist = Math.sign(thicknessRandom) * Math.pow(Math.abs(thicknessRandom), 0.7);
+      const thickness = verticalDist * maxThickness;
 
       diskPositions[i3] = Math.cos(angle) * radius;
       diskPositions[i3 + 1] = Math.sin(angle) * radius;
       diskPositions[i3 + 2] = thickness;
 
-      // Orbital velocity (faster closer to center, Keplerian orbit)
-      const speed = 0.015 / Math.sqrt(radius);
-      diskVelocities[i3] = -Math.sin(angle) * speed;
-      diskVelocities[i3 + 1] = Math.cos(angle) * speed;
-      diskVelocities[i3 + 2] = 0;
+      // Store particle data for complex physics simulation
+      diskData.push({
+        radius,
+        angle,
+        verticalPhase: Math.random() * Math.PI * 2, // For vertical oscillations
+        turbulence: Math.random(), // Turbulent motion seed
+        speed: 0.015 / Math.sqrt(radius) // Keplerian speed
+      });
 
-      // Hot accretion disk colors - orange/red with Doppler shift
-      // Inner disk is hotter (blue-white), outer is cooler (red-orange)
+      // Advanced temperature and color model
+      // Temperature based on radius AND vertical height (cooler away from midplane)
       const temp = 1.0 - (radius - 0.9) / 2.5;
+      const verticalCooling = 1.0 - Math.abs(thickness) / maxThickness * 0.4;
+      const effectiveTemp = temp * verticalCooling;
 
-      if (temp > 0.8) {
-        // Ultra-hot inner region - blue-white
-        diskColors[i3] = 0.8 + Math.random() * 0.2;
-        diskColors[i3 + 1] = 0.9 + Math.random() * 0.1;
+      if (effectiveTemp > 0.75) {
+        // Ultra-hot inner region - brilliant blue-white
+        diskColors[i3] = 0.85 + Math.random() * 0.15;
+        diskColors[i3 + 1] = 0.92 + Math.random() * 0.08;
         diskColors[i3 + 2] = 1.0;
-      } else if (temp > 0.5) {
-        // Hot middle region - white-yellow
+      } else if (effectiveTemp > 0.55) {
+        // Hot region - white-yellow with blue tint
+        diskColors[i3] = 0.95 + Math.random() * 0.05;
+        diskColors[i3 + 1] = 0.85 + Math.random() * 0.15;
+        diskColors[i3 + 2] = 0.5 + Math.random() * 0.3;
+      } else if (effectiveTemp > 0.35) {
+        // Warm region - yellow-orange
         diskColors[i3] = 1.0;
-        diskColors[i3 + 1] = 0.8 + Math.random() * 0.2;
-        diskColors[i3 + 2] = 0.4 + Math.random() * 0.2;
+        diskColors[i3 + 1] = 0.6 + Math.random() * 0.3;
+        diskColors[i3 + 2] = 0.2 + Math.random() * 0.3;
       } else {
-        // Cooler outer region - orange-red
+        // Cool outer region - orange-red
         diskColors[i3] = 1.0;
-        diskColors[i3 + 1] = 0.3 + Math.random() * 0.3;
-        diskColors[i3 + 2] = 0.1 + Math.random() * 0.2;
+        diskColors[i3 + 1] = 0.25 + Math.random() * 0.35;
+        diskColors[i3 + 2] = 0.05 + Math.random() * 0.2;
       }
     }
 
-    return { diskPositions, diskColors, diskVelocities };
+    return { diskPositions, diskColors, diskData };
   }, []);
 
-  // Animate accretion disk rotation
+  // Inner super-hot accretion disk layer
+  const { innerDiskPositions, innerDiskColors } = useMemo(() => {
+    const particleCount = 2000;
+    const innerDiskPositions = new Float32Array(particleCount * 3);
+    const innerDiskColors = new Float32Array(particleCount * 3);
+
+    for (let i = 0; i < particleCount; i++) {
+      const i3 = i * 3;
+      const radius = 0.78 + Math.random() * 0.3; // Very close to event horizon
+      const angle = Math.random() * Math.PI * 2;
+      const thickness = (Math.random() - 0.5) * 0.04; // Very thin
+
+      innerDiskPositions[i3] = Math.cos(angle) * radius;
+      innerDiskPositions[i3 + 1] = Math.sin(angle) * radius;
+      innerDiskPositions[i3 + 2] = thickness;
+
+      // Extreme temperature - pure white with blue/UV tint
+      innerDiskColors[i3] = 0.9 + Math.random() * 0.1;
+      innerDiskColors[i3 + 1] = 0.95 + Math.random() * 0.05;
+      innerDiskColors[i3 + 2] = 1.0;
+    }
+
+    return { innerDiskPositions, innerDiskColors };
+  }, []);
+
+  // Polar jets - relativistic particles shooting from poles
+  const { jetPositions, jetColors, jetData } = useMemo(() => {
+    const particleCount = 1500;
+    const jetPositions = new Float32Array(particleCount * 3);
+    const jetColors = new Float32Array(particleCount * 3);
+    const jetData: Array<{ height: number; angle: number; speed: number }> = [];
+
+    for (let i = 0; i < particleCount; i++) {
+      const i3 = i * 3;
+
+      // Jets shoot along Z axis (perpendicular to disk)
+      const height = Math.random() * 4; // Jet length
+      const jetRadius = 0.05 + (height / 4) * 0.2; // Widens with distance
+      const angle = Math.random() * Math.PI * 2;
+      const direction = i < particleCount / 2 ? 1 : -1; // North and south jets
+
+      jetPositions[i3] = Math.cos(angle) * jetRadius;
+      jetPositions[i3 + 1] = Math.sin(angle) * jetRadius;
+      jetPositions[i3 + 2] = (0.8 + height) * direction; // Start above disk
+
+      jetData.push({
+        height,
+        angle,
+        speed: 0.02 + Math.random() * 0.03
+      });
+
+      // Jet colors - blue-white with cyan synchrotron radiation
+      const intensity = 1.0 - height / 4;
+      jetColors[i3] = 0.4 + intensity * 0.4;
+      jetColors[i3 + 1] = 0.7 + intensity * 0.3;
+      jetColors[i3 + 2] = 1.0;
+    }
+
+    return { jetPositions, jetColors, jetData };
+  }, []);
+
+  // Animate 3D accretion disk with full physics simulation
   useFrame((state) => {
     const time = state.clock.getElapsedTime();
 
@@ -525,9 +611,71 @@ function BlackHole() {
       }
     }
 
-    // Rotate accretion disk particles
+    // Main 3D volumetric accretion disk with complex physics
     if (accretionDiskRef.current) {
       const posAttr = accretionDiskRef.current.geometry.attributes.position;
+      const positions = posAttr.array as Float32Array;
+
+      for (let i = 0; i < positions.length / 3; i++) {
+        const i3 = i * 3;
+        const data = diskData[i];
+        if (!data) continue;
+
+        const x = positions[i3];
+        const y = positions[i3 + 1];
+        const z = positions[i3 + 2];
+
+        const radius = Math.sqrt(x * x + y * y);
+        const angle = Math.atan2(y, x);
+
+        // Keplerian orbital speed with relativistic frame-dragging
+        const baseSpeed = data.speed;
+        // Frame-dragging: inner disk rotates faster due to spacetime dragging
+        const frameDrag = 0.003 / (radius * radius + 0.1);
+        const speed = baseSpeed + frameDrag;
+        const newAngle = angle + speed;
+
+        // Update orbital position
+        let newX = Math.cos(newAngle) * radius;
+        let newY = Math.sin(newAngle) * radius;
+
+        // Add 3D turbulence - chaotic eddies and vortices
+        const turbulenceScale = 0.003 * (1.0 + Math.sin(data.turbulence * 100));
+        const turbX = Math.sin(time * 1.5 + data.turbulence * 10) * turbulenceScale;
+        const turbY = Math.cos(time * 1.3 + data.turbulence * 8) * turbulenceScale;
+        newX += turbX;
+        newY += turbY;
+
+        // Vertical oscillations - disk "breathing" from pressure waves
+        const verticalOscillation = Math.sin(time * 2 + data.verticalPhase) * 0.015;
+        // Epicyclic frequency - vertical oscillations at different rate than orbital
+        const epicyclicFreq = Math.sqrt(2.0 / (radius + 0.5));
+        const verticalWave = Math.sin(time * epicyclicFreq * 3 + angle * 2) * 0.008;
+
+        // Magneto-rotational instability - creates vertical structure
+        const mriTurbulence = Math.sin(time * 4 + radius * 5 + data.turbulence * 20) * 0.012;
+
+        let newZ = z + verticalOscillation + verticalWave + mriTurbulence;
+
+        // Spiral density waves - creates arm structure
+        const spiralWave = Math.sin(angle * 3 - radius * 2 + time * 0.5) * 0.02;
+        const spiralRadius = radius * (1.0 + spiralWave);
+
+        newX = Math.cos(newAngle) * spiralRadius + turbX;
+        newY = Math.sin(newAngle) * spiralRadius + turbY;
+
+        // Update positions
+        positions[i3] = newX;
+        positions[i3 + 1] = newY;
+        positions[i3 + 2] = newZ;
+      }
+
+      posAttr.needsUpdate = true;
+    }
+
+    // Inner super-hot disk layer - faster rotation
+    if (innerDiskRef.current) {
+      const posAttr = innerDiskRef.current.geometry.attributes.position;
       const positions = posAttr.array as Float32Array;
 
       for (let i = 0; i < positions.length; i += 3) {
@@ -538,16 +686,55 @@ function BlackHole() {
         const radius = Math.sqrt(x * x + y * y);
         const angle = Math.atan2(y, x);
 
-        // Keplerian orbital speed
-        const speed = 0.015 / Math.sqrt(radius + 0.1);
+        // Very fast rotation near event horizon
+        const speed = 0.025 / Math.sqrt(radius + 0.05);
         const newAngle = angle + speed;
 
-        // Update position
-        positions[i] = Math.cos(newAngle) * radius;
-        positions[i + 1] = Math.sin(newAngle) * radius;
+        // Intense turbulence near ISCO (innermost stable circular orbit)
+        const turbulence = Math.sin(time * 5 + i * 0.1) * 0.01;
 
-        // Add slight wobble to thickness
-        positions[i + 2] = z + Math.sin(time * 2 + radius * 10) * 0.002;
+        positions[i] = Math.cos(newAngle) * (radius + turbulence);
+        positions[i + 1] = Math.sin(newAngle) * (radius + turbulence);
+        positions[i + 2] = z + Math.sin(time * 6 + i * 0.2) * 0.008;
+      }
+
+      posAttr.needsUpdate = true;
+    }
+
+    // Polar jets - particles streaming out from poles
+    if (polarJetsRef.current) {
+      const posAttr = polarJetsRef.current.geometry.attributes.position;
+      const positions = posAttr.array as Float32Array;
+
+      for (let i = 0; i < positions.length / 3; i++) {
+        const i3 = i * 3;
+        const data = jetData[i];
+        if (!data) continue;
+
+        const direction = i < jetData.length / 2 ? 1 : -1;
+
+        // Move particles upward along jet
+        let height = data.height + data.speed;
+
+        // Reset particles that reach the end
+        if (height > 4) {
+          height = 0;
+        }
+
+        data.height = height;
+
+        // Jet widens as it extends (collimation then expansion)
+        const collimation = height < 1 ? height : 1;
+        const expansion = height > 1 ? (height - 1) * 0.15 : 0;
+        const jetRadius = 0.05 * collimation + expansion;
+
+        // Helical structure from magnetic fields
+        const helixAngle = data.angle + height * 2;
+        const helixRadius = jetRadius * (1 + Math.sin(time * 2 + height * 5) * 0.3);
+
+        positions[i3] = Math.cos(helixAngle) * helixRadius;
+        positions[i3 + 1] = Math.sin(helixAngle) * helixRadius;
+        positions[i3 + 2] = (0.8 + height) * direction;
       }
 
       posAttr.needsUpdate = true;
@@ -595,13 +782,27 @@ function BlackHole() {
     `
   }), []);
 
-  // Accretion disk geometry
+  // Geometries for all disk components
   const diskGeometry = useMemo(() => {
     const geom = new THREE.BufferGeometry();
     geom.setAttribute('position', new THREE.BufferAttribute(diskPositions, 3));
     geom.setAttribute('color', new THREE.BufferAttribute(diskColors, 3));
     return geom;
   }, [diskPositions, diskColors]);
+
+  const innerDiskGeometry = useMemo(() => {
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.BufferAttribute(innerDiskPositions, 3));
+    geom.setAttribute('color', new THREE.BufferAttribute(innerDiskColors, 3));
+    return geom;
+  }, [innerDiskPositions, innerDiskColors]);
+
+  const jetsGeometry = useMemo(() => {
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.BufferAttribute(jetPositions, 3));
+    geom.setAttribute('color', new THREE.BufferAttribute(jetColors, 3));
+    return geom;
+  }, [jetPositions, jetColors]);
 
   return (
     <group>
@@ -611,26 +812,64 @@ function BlackHole() {
         <shaderMaterial {...eventHorizonShader} />
       </mesh>
 
-      {/* Accretion Disk - Hot rotating particles */}
+      {/* Main 3D Volumetric Accretion Disk */}
       <points ref={accretionDiskRef} geometry={diskGeometry}>
         <pointsMaterial
-          size={0.035}
+          size={0.028}
           vertexColors
           transparent
-          opacity={0.9}
+          opacity={0.85}
           sizeAttenuation={true}
           depthWrite={false}
           blending={THREE.AdditiveBlending}
         />
       </points>
 
-      {/* Inner glow ring */}
+      {/* Inner super-hot disk layer */}
+      <points ref={innerDiskRef} geometry={innerDiskGeometry}>
+        <pointsMaterial
+          size={0.04}
+          vertexColors
+          transparent
+          opacity={0.95}
+          sizeAttenuation={true}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </points>
+
+      {/* Polar Jets - Relativistic outflows */}
+      <points ref={polarJetsRef} geometry={jetsGeometry}>
+        <pointsMaterial
+          size={0.025}
+          vertexColors
+          transparent
+          opacity={0.7}
+          sizeAttenuation={true}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </points>
+
+      {/* Inner glow ring - enhanced */}
       <mesh rotation={[Math.PI / 2, 0, 0]}>
         <ringGeometry args={[0.76, 1.2, 64]} />
         <meshBasicMaterial
-          color="#ff6b00"
+          color="#ff8800"
           transparent
-          opacity={0.15}
+          opacity={0.2}
+          side={THREE.DoubleSide}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+
+      {/* Middle glow ring */}
+      <mesh rotation={[Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[1.2, 2.0, 64]} />
+        <meshBasicMaterial
+          color="#ff5500"
+          transparent
+          opacity={0.12}
           side={THREE.DoubleSide}
           blending={THREE.AdditiveBlending}
         />
@@ -638,11 +877,11 @@ function BlackHole() {
 
       {/* Outer glow ring */}
       <mesh rotation={[Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[1.2, 2.0, 64]} />
+        <ringGeometry args={[2.0, 3.2, 64]} />
         <meshBasicMaterial
           color="#ff3300"
           transparent
-          opacity={0.08}
+          opacity={0.06}
           side={THREE.DoubleSide}
           blending={THREE.AdditiveBlending}
         />
