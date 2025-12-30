@@ -1321,23 +1321,29 @@ export const ThreeJsHero: React.FC = () => {
 
   return (
     <div className="absolute inset-0 -z-10">
-      {/* 3D Camera Controls UI Panel */}
-      {showControls && (
-        <div className="absolute top-6 left-6 z-10 bg-primary/95 backdrop-blur-md border border-accent/40 rounded-xl p-5 space-y-4 font-mono text-sm pointer-events-auto shadow-2xl max-w-xs animate-in fade-in slide-in-from-left-5 duration-300">
-          {/* Header */}
-          <div className="flex items-center justify-between gap-4 pb-3 border-b border-accent/20">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-              <h3 className="text-accent font-semibold text-base tracking-wide">CAMERA CONTROL</h3>
+      {/* UI Layer - Always on top with proper z-index */}
+      <div className="absolute inset-0 z-50 pointer-events-none">
+        {/* 3D Camera Controls UI Panel */}
+        {showControls && (
+          <div className="absolute top-6 left-6 bg-primary/95 backdrop-blur-md border border-accent/40 rounded-xl p-5 space-y-4 font-mono text-sm pointer-events-auto shadow-2xl max-w-xs animate-in fade-in slide-in-from-left-5 duration-300">
+            {/* Header */}
+            <div className="flex items-center justify-between gap-4 pb-3 border-b border-accent/20">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+                <h3 className="text-accent font-semibold text-base tracking-wide">CAMERA CONTROL</h3>
+              </div>
+              <button
+                onClick={() => setShowControls(false)}
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  setShowControls(false);
+                }}
+                className="text-foreground/50 hover:text-foreground transition-colors text-lg font-bold cursor-pointer touch-manipulation"
+                aria-label="Close controls"
+              >
+                ✕
+              </button>
             </div>
-            <button
-              onClick={() => setShowControls(false)}
-              className="text-foreground/50 hover:text-foreground transition-colors text-lg font-bold"
-              aria-label="Close controls"
-            >
-              ✕
-            </button>
-          </div>
 
           {/* Camera Presets */}
           <div className="space-y-3">
@@ -1345,43 +1351,71 @@ export const ThreeJsHero: React.FC = () => {
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => handlePreset('default')}
-                className="px-3 py-2 bg-primary/60 hover:bg-accent/20 border border-accent/30 rounded-lg text-xs text-foreground hover:text-accent transition-all hover:scale-105 active:scale-95"
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  handlePreset('default');
+                }}
+                className="px-3 py-2 bg-primary/60 hover:bg-accent/20 border border-accent/30 rounded-lg text-xs text-foreground hover:text-accent transition-all hover:scale-105 active:scale-95 cursor-pointer touch-manipulation"
               >
                 🎯 Default
               </button>
               <button
                 onClick={() => handlePreset('top')}
-                className="px-3 py-2 bg-primary/60 hover:bg-accent/20 border border-accent/30 rounded-lg text-xs text-foreground hover:text-accent transition-all hover:scale-105 active:scale-95"
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  handlePreset('top');
+                }}
+                className="px-3 py-2 bg-primary/60 hover:bg-accent/20 border border-accent/30 rounded-lg text-xs text-foreground hover:text-accent transition-all hover:scale-105 active:scale-95 cursor-pointer touch-manipulation"
               >
                 ⬆️ Top View
               </button>
               <button
                 onClick={() => handlePreset('side')}
-                className="px-3 py-2 bg-primary/60 hover:bg-accent/20 border border-accent/30 rounded-lg text-xs text-foreground hover:text-accent transition-all hover:scale-105 active:scale-95"
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  handlePreset('side');
+                }}
+                className="px-3 py-2 bg-primary/60 hover:bg-accent/20 border border-accent/30 rounded-lg text-xs text-foreground hover:text-accent transition-all hover:scale-105 active:scale-95 cursor-pointer touch-manipulation"
               >
                 ↔️ Side View
               </button>
               <button
                 onClick={() => handlePreset('front')}
-                className="px-3 py-2 bg-primary/60 hover:bg-accent/20 border border-accent/30 rounded-lg text-xs text-foreground hover:text-accent transition-all hover:scale-105 active:scale-95"
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  handlePreset('front');
+                }}
+                className="px-3 py-2 bg-primary/60 hover:bg-accent/20 border border-accent/30 rounded-lg text-xs text-foreground hover:text-accent transition-all hover:scale-105 active:scale-95 cursor-pointer touch-manipulation"
               >
                 👁️ Front View
               </button>
               <button
                 onClick={() => handlePreset('isometric')}
-                className="px-3 py-2 bg-primary/60 hover:bg-accent/20 border border-accent/30 rounded-lg text-xs text-foreground hover:text-accent transition-all hover:scale-105 active:scale-95"
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  handlePreset('isometric');
+                }}
+                className="px-3 py-2 bg-primary/60 hover:bg-accent/20 border border-accent/30 rounded-lg text-xs text-foreground hover:text-accent transition-all hover:scale-105 active:scale-95 cursor-pointer touch-manipulation"
               >
                 📐 Isometric
               </button>
               <button
                 onClick={() => handlePreset('closeup')}
-                className="px-3 py-2 bg-primary/60 hover:bg-accent/20 border border-accent/30 rounded-lg text-xs text-foreground hover:text-accent transition-all hover:scale-105 active:scale-95"
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  handlePreset('closeup');
+                }}
+                className="px-3 py-2 bg-primary/60 hover:bg-accent/20 border border-accent/30 rounded-lg text-xs text-foreground hover:text-accent transition-all hover:scale-105 active:scale-95 cursor-pointer touch-manipulation"
               >
                 🔍 Close-up
               </button>
               <button
                 onClick={() => handlePreset('dramatic')}
-                className="px-3 py-2 bg-primary/60 hover:bg-accent/20 border border-accent/30 rounded-lg text-xs text-foreground hover:text-accent transition-all hover:scale-105 active:scale-95"
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  handlePreset('dramatic');
+                }}
+                className="px-3 py-2 bg-primary/60 hover:bg-accent/20 border border-accent/30 rounded-lg text-xs text-foreground hover:text-accent transition-all hover:scale-105 active:scale-95 cursor-pointer touch-manipulation"
               >
                 ⚡ Dramatic
               </button>
@@ -1393,7 +1427,11 @@ export const ThreeJsHero: React.FC = () => {
             <h4 className="text-xs text-foreground/60 uppercase tracking-wider font-semibold">Camera Features</h4>
             <button
               onClick={() => setAutoRotate(!autoRotate)}
-              className={`w-full px-3 py-2.5 border rounded-lg text-xs font-semibold transition-all hover:scale-105 active:scale-95 ${
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                setAutoRotate(!autoRotate);
+              }}
+              className={`w-full px-3 py-2.5 border rounded-lg text-xs font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer touch-manipulation ${
                 autoRotate
                   ? 'bg-accent/30 border-accent text-accent hover:bg-accent/40'
                   : 'bg-primary/60 border-accent/30 text-foreground hover:bg-accent/20 hover:text-accent'
@@ -1403,7 +1441,11 @@ export const ThreeJsHero: React.FC = () => {
             </button>
             <button
               onClick={() => handlePreset('wide')}
-              className="w-full px-3 py-2.5 bg-primary/60 hover:bg-accent/20 border border-accent/30 rounded-lg text-xs text-foreground hover:text-accent transition-all hover:scale-105 active:scale-95 font-semibold"
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                handlePreset('wide');
+              }}
+              className="w-full px-3 py-2.5 bg-primary/60 hover:bg-accent/20 border border-accent/30 rounded-lg text-xs text-foreground hover:text-accent transition-all hover:scale-105 active:scale-95 font-semibold cursor-pointer touch-manipulation"
             >
               🌌 Wide View
             </button>
@@ -1414,7 +1456,11 @@ export const ThreeJsHero: React.FC = () => {
             <h4 className="text-xs text-foreground/60 uppercase tracking-wider font-semibold">Relativistic Physics</h4>
             <button
               onClick={() => setEnableDoppler(!enableDoppler)}
-              className={`w-full px-3 py-2.5 border rounded-lg text-xs font-semibold transition-all hover:scale-105 active:scale-95 ${
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                setEnableDoppler(!enableDoppler);
+              }}
+              className={`w-full px-3 py-2.5 border rounded-lg text-xs font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer touch-manipulation ${
                 enableDoppler
                   ? 'bg-accent/30 border-accent text-accent hover:bg-accent/40'
                   : 'bg-primary/60 border-accent/30 text-foreground hover:bg-accent/20 hover:text-accent'
@@ -1425,7 +1471,11 @@ export const ThreeJsHero: React.FC = () => {
             </button>
             <button
               onClick={() => setEnableLensing(!enableLensing)}
-              className={`w-full px-3 py-2.5 border rounded-lg text-xs font-semibold transition-all hover:scale-105 active:scale-95 ${
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                setEnableLensing(!enableLensing);
+              }}
+              className={`w-full px-3 py-2.5 border rounded-lg text-xs font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer touch-manipulation ${
                 enableLensing
                   ? 'bg-accent/30 border-accent text-accent hover:bg-accent/40'
                   : 'bg-primary/60 border-accent/30 text-foreground hover:bg-accent/20 hover:text-accent'
@@ -1469,33 +1519,42 @@ export const ThreeJsHero: React.FC = () => {
         </div>
       )}
 
-      {/* Minimized Toggle Button */}
-      {!showControls && (
+        {/* Minimized Toggle Button */}
+        {!showControls && (
+          <button
+            onClick={() => setShowControls(true)}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              setShowControls(true);
+            }}
+            className="absolute top-6 left-6 bg-primary/95 backdrop-blur-md border border-accent/40 rounded-lg px-4 py-2.5 font-mono text-sm text-accent hover:bg-accent/30 hover:scale-105 transition-all shadow-lg pointer-events-auto flex items-center gap-2 font-semibold animate-in fade-in slide-in-from-left-5 duration-300 cursor-pointer touch-manipulation"
+            title="Open camera controls"
+          >
+            <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+            <span>CAMERA</span>
+          </button>
+        )}
+
+        {/* Theme Toggle - Below Camera Button */}
         <button
-          onClick={() => setShowControls(true)}
-          className="absolute top-6 left-6 z-10 bg-primary/95 backdrop-blur-md border border-accent/40 rounded-lg px-4 py-2.5 font-mono text-sm text-accent hover:bg-accent/30 hover:scale-105 transition-all shadow-lg pointer-events-auto flex items-center gap-2 font-semibold animate-in fade-in slide-in-from-left-5 duration-300"
-          title="Open camera controls"
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            setTheme(theme === 'dark' ? 'light' : 'dark');
+          }}
+          className="absolute top-20 left-6 bg-primary/95 backdrop-blur-md border border-accent/40 rounded-lg px-4 py-2.5 font-mono text-xs text-foreground hover:bg-accent/30 hover:scale-105 transition-all shadow-lg pointer-events-auto flex items-center gap-2 font-semibold cursor-pointer touch-manipulation"
+          title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
         >
-          <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-          <span>CAMERA</span>
+          {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
         </button>
-      )}
 
-      {/* Theme Toggle - Below Camera Button */}
-      <button
-        onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-        className="absolute top-20 left-6 z-10 bg-primary/95 backdrop-blur-md border border-accent/40 rounded-lg px-4 py-2.5 font-mono text-xs text-foreground hover:bg-accent/30 hover:scale-105 transition-all shadow-lg pointer-events-auto flex items-center gap-2 font-semibold"
-        title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-      >
-        {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
-      </button>
-
-      {/* Helper text for first-time users - only shows when controls are minimized */}
-      {!showControls && (
-        <div className="absolute bottom-6 left-6 z-10 bg-primary/80 backdrop-blur-md border border-accent/30 rounded-lg px-4 py-2 font-mono text-xs text-foreground/70 pointer-events-none shadow-lg max-w-xs animate-in fade-in slide-in-from-bottom-5 duration-500 delay-1000">
-          <span className="text-accent">💡 Tip:</span> Drag to rotate • Right-click to pan • Scroll to zoom
-        </div>
-      )}
+        {/* Helper text for first-time users - only shows when controls are minimized */}
+        {!showControls && (
+          <div className="absolute bottom-6 left-6 bg-primary/80 backdrop-blur-md border border-accent/30 rounded-lg px-4 py-2 font-mono text-xs text-foreground/70 pointer-events-none shadow-lg max-w-xs animate-in fade-in slide-in-from-bottom-5 duration-500 delay-1000">
+            <span className="text-accent">💡 Tip:</span> Drag to rotate • Right-click to pan • Scroll to zoom
+          </div>
+        )}
+      </div>
 
       <Canvas
         camera={{ position: [3, 2, 6], fov: 70 }}
