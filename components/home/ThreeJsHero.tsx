@@ -471,6 +471,8 @@ function BlackHole({
   const holographicDiskRef = useRef<THREE.Points>(null);
   const magneticFieldLinesRef = useRef<THREE.Points>(null);
   const particleTrailsRef = useRef<THREE.Points>(null);
+  const orbitingStarsRef = useRef<THREE.Points>(null);
+  const starTrailsRef = useRef<THREE.Points>(null);
 
   // Velocity storage for accretion disk particles
   const diskVelocities = useRef<Float32Array>(new Float32Array(8000 * 3));
@@ -763,6 +765,112 @@ function BlackHole({
     return { jetPositions, jetColors, jetData };
   }, []);
 
+  // ORBITING STARS - Gravitational attractors in outer disk for accretion evolution
+  const NUM_STARS = 9;
+  const STAR_TRAIL_LENGTH = 150; // Longer trails for stars
+
+  const { starPositions, starColors, starVelocities, starData } = useMemo(() => {
+    const starPositions = new Float32Array(NUM_STARS * 3);
+    const starColors = new Float32Array(NUM_STARS * 3);
+    const starVelocities = new Float32Array(NUM_STARS * 3);
+    const starData: Array<{
+      radius: number;
+      angle: number;
+      orbitalSpeed: number;
+      mass: number; // Gravitational strength
+      phase: number; // Orbital phase offset
+    }> = [];
+
+    for (let i = 0; i < NUM_STARS; i++) {
+      const i3 = i * 3;
+
+      // Distribute stars in outer disk (r: 2.0 to 3.2)
+      const radius = 2.0 + (i / NUM_STARS) * 1.2;
+      const angle = (i / NUM_STARS) * Math.PI * 2 + Math.random() * 0.5; // Distributed around disk
+      const phase = Math.random() * Math.PI * 2; // Random initial phase
+
+      // Initial position on circular orbit in disk plane
+      starPositions[i3] = Math.cos(angle) * radius;
+      starPositions[i3 + 1] = Math.sin(angle) * radius;
+      starPositions[i3 + 2] = (Math.random() - 0.5) * 0.15; // Slight vertical variance
+
+      // Keplerian orbital speed v = sqrt(GM/r)
+      const orbitalSpeed = Math.sqrt(1.0 / radius) * 0.15;
+
+      // Initial velocity (perpendicular to radius)
+      starVelocities[i3] = -Math.sin(angle) * orbitalSpeed;
+      starVelocities[i3 + 1] = Math.cos(angle) * orbitalSpeed;
+      starVelocities[i3 + 2] = 0;
+
+      // Star mass (gravitational influence on particles)
+      // Larger stars = stronger gravity
+      const mass = 0.08 + Math.random() * 0.12; // 0.08 to 0.2
+
+      starData.push({
+        radius,
+        angle,
+        orbitalSpeed,
+        mass,
+        phase
+      });
+
+      // Star colors - bright stellar colors (white, yellow-white, blue-white)
+      const starType = Math.random();
+      if (starType < 0.33) {
+        // Blue-white hot stars
+        starColors[i3] = 0.85 + Math.random() * 0.15;
+        starColors[i3 + 1] = 0.90 + Math.random() * 0.10;
+        starColors[i3 + 2] = 1.0;
+      } else if (starType < 0.66) {
+        // White stars
+        starColors[i3] = 0.95 + Math.random() * 0.05;
+        starColors[i3 + 1] = 0.95 + Math.random() * 0.05;
+        starColors[i3 + 2] = 0.90 + Math.random() * 0.10;
+      } else {
+        // Yellow-white stars
+        starColors[i3] = 1.0;
+        starColors[i3 + 1] = 0.92 + Math.random() * 0.08;
+        starColors[i3 + 2] = 0.70 + Math.random() * 0.15;
+      }
+    }
+
+    return { starPositions, starColors, starVelocities, starData };
+  }, []);
+
+  // Star trail positions (each star has a trail showing its orbit)
+  const starTrailPositions = useRef<Float32Array>(new Float32Array(NUM_STARS * STAR_TRAIL_LENGTH * 3));
+  const starTrailAges = useRef<Float32Array>(new Float32Array(NUM_STARS * STAR_TRAIL_LENGTH));
+  const starTrailColors = useRef<Float32Array>(new Float32Array(NUM_STARS * STAR_TRAIL_LENGTH * 3));
+
+  // Initialize star trails
+  useMemo(() => {
+    for (let i = 0; i < NUM_STARS; i++) {
+      const i3 = i * 3;
+      for (let t = 0; t < STAR_TRAIL_LENGTH; t++) {
+        const trailIdx = i * STAR_TRAIL_LENGTH + t;
+        starTrailPositions.current[trailIdx * 3] = starPositions[i3];
+        starTrailPositions.current[trailIdx * 3 + 1] = starPositions[i3 + 1];
+        starTrailPositions.current[trailIdx * 3 + 2] = starPositions[i3 + 2];
+        starTrailAges.current[trailIdx] = t / STAR_TRAIL_LENGTH;
+        starTrailColors.current[trailIdx * 3] = starColors[i3];
+        starTrailColors.current[trailIdx * 3 + 1] = starColors[i3 + 1];
+        starTrailColors.current[trailIdx * 3 + 2] = starColors[i3 + 2];
+      }
+    }
+  }, [starPositions, starColors]);
+
+  // Particle orbital binding state - tracks which gravitational source each particle orbits
+  const particleOrbitSource = useRef<Int32Array>(new Int32Array(8000)); // -1 = black hole, 0-8 = star index
+  const particleOrbitTransition = useRef<Float32Array>(new Float32Array(8000)); // Smooth transition factor
+
+  // Initialize all particles to orbit black hole
+  useMemo(() => {
+    for (let i = 0; i < 8000; i++) {
+      particleOrbitSource.current[i] = -1; // Start orbiting black hole
+      particleOrbitTransition.current[i] = 0.0;
+    }
+  }, []);
+
   // Animate 3D accretion disk with full physics simulation
   useFrame((state) => {
     const time = state.clock.getElapsedTime();
@@ -782,6 +890,73 @@ function BlackHole({
       if (material.uniforms) {
         material.uniforms.time.value = time;
       }
+    }
+
+    // ORBITING STARS - Update star positions with Keplerian orbital motion
+    for (let i = 0; i < NUM_STARS; i++) {
+      const i3 = i * 3;
+      const star = starData[i];
+
+      const x = starPositions[i3];
+      const y = starPositions[i3 + 1];
+      const z = starPositions[i3 + 2];
+
+      const radius = Math.sqrt(x * x + y * y);
+      const distToCenter = Math.sqrt(x * x + y * y + z * z);
+
+      // Gravitational attraction from black hole
+      const gravityStrength = 0.0015; // Stars also affected by black hole gravity
+      const gravityForce = gravityStrength / (distToCenter * distToCenter + 0.02);
+
+      const dirX = -x / distToCenter;
+      const dirY = -y / distToCenter;
+      const dirZ = -z / distToCenter;
+
+      // Apply gravity to star velocity
+      starVelocities[i3] += dirX * gravityForce;
+      starVelocities[i3 + 1] += dirY * gravityForce;
+      starVelocities[i3 + 2] += dirZ * gravityForce;
+
+      // Keplerian orbital velocity (tangential)
+      const cylindricalRadius = Math.sqrt(x * x + y * y);
+      const orbitalOmega = star.orbitalSpeed / (cylindricalRadius + 0.1);
+
+      // Tangential velocity to maintain orbit
+      starVelocities[i3] += -y * orbitalOmega * 0.5;
+      starVelocities[i3 + 1] += x * orbitalOmega * 0.5;
+
+      // Slight damping for stability
+      starVelocities[i3] *= 0.998;
+      starVelocities[i3 + 1] *= 0.998;
+      starVelocities[i3 + 2] *= 0.999;
+
+      // Update star position
+      starPositions[i3] += starVelocities[i3];
+      starPositions[i3 + 1] += starVelocities[i3 + 1];
+      starPositions[i3 + 2] += starVelocities[i3 + 2];
+
+      // Update star angle and radius in data
+      star.angle = Math.atan2(starPositions[i3 + 1], starPositions[i3]);
+      star.radius = Math.sqrt(starPositions[i3] * starPositions[i3] + starPositions[i3 + 1] * starPositions[i3 + 1]);
+
+      // UPDATE STAR TRAILS
+      // Shift trail positions (oldest gets discarded)
+      for (let t = STAR_TRAIL_LENGTH - 1; t > 0; t--) {
+        const trailIdx = i * STAR_TRAIL_LENGTH + t;
+        const prevIdx = i * STAR_TRAIL_LENGTH + (t - 1);
+
+        starTrailPositions.current[trailIdx * 3] = starTrailPositions.current[prevIdx * 3];
+        starTrailPositions.current[trailIdx * 3 + 1] = starTrailPositions.current[prevIdx * 3 + 1];
+        starTrailPositions.current[trailIdx * 3 + 2] = starTrailPositions.current[prevIdx * 3 + 2];
+        starTrailAges.current[trailIdx] = t / STAR_TRAIL_LENGTH;
+      }
+
+      // Set newest trail position to current star position
+      const trailIdx = i * STAR_TRAIL_LENGTH;
+      starTrailPositions.current[trailIdx * 3] = starPositions[i3];
+      starTrailPositions.current[trailIdx * 3 + 1] = starPositions[i3 + 1];
+      starTrailPositions.current[trailIdx * 3 + 2] = starPositions[i3 + 2];
+      starTrailAges.current[trailIdx] = 0;
     }
 
     // Main 3D volumetric accretion disk with complex physics
@@ -844,6 +1019,102 @@ function BlackHole({
         vels[i3] += -y * frameDrag;
         vels[i3 + 1] += x * frameDrag;
         vels[i3 + 2] += z * frameDrag * 0.5; // Vertical frame-dragging
+
+        // STELLAR GRAVITATIONAL ATTRACTION - Particles attracted to orbiting stars
+        // Calculate distance to each star and apply gravitational force
+        let closestStarDist = Infinity;
+        let closestStarIndex = -1;
+        let totalStarForceX = 0;
+        let totalStarForceY = 0;
+        let totalStarForceZ = 0;
+
+        for (let s = 0; s < NUM_STARS; s++) {
+          const si3 = s * 3;
+          const starX = starPositions[si3];
+          const starY = starPositions[si3 + 1];
+          const starZ = starPositions[si3 + 2];
+
+          // Vector from particle to star
+          const dx = starX - x;
+          const dy = starY - y;
+          const dz = starZ - z;
+          const distToStar = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+          // Track closest star for orbit-switching logic
+          if (distToStar < closestStarDist) {
+            closestStarDist = distToStar;
+            closestStarIndex = s;
+          }
+
+          // Gravitational force from star: F = G * M_star / r^2
+          const starMass = starData[s].mass;
+          const starGravityForce = starMass / (distToStar * distToStar + 0.05);
+
+          // Direction toward star (normalized)
+          const starDirX = dx / (distToStar + 0.001);
+          const starDirY = dy / (distToStar + 0.001);
+          const starDirZ = dz / (distToStar + 0.001);
+
+          // Accumulate gravitational forces from all stars
+          totalStarForceX += starDirX * starGravityForce;
+          totalStarForceY += starDirY * starGravityForce;
+          totalStarForceZ += starDirZ * starGravityForce;
+        }
+
+        // Apply stellar gravitational forces to particle velocity
+        vels[i3] += totalStarForceX * 0.4; // Scaled for balance with black hole
+        vels[i3 + 1] += totalStarForceY * 0.4;
+        vels[i3 + 2] += totalStarForceZ * 0.4;
+
+        // ORBIT-SWITCHING LOGIC - Accretion evolution dynamics
+        // Particles can switch between orbiting black hole and orbiting stars
+        const currentOrbitSource = particleOrbitSource.current[i];
+        const blackHoleInfluence = gravityForce; // Already calculated above
+
+        // Influence sphere: star's gravitational influence vs black hole
+        let targetOrbitSource = -1; // Default to black hole
+
+        if (closestStarDist < 0.4) { // Within star's influence sphere
+          const closestStarMass = starData[closestStarIndex].mass;
+          const starInfluence = closestStarMass / (closestStarDist * closestStarDist + 0.05);
+
+          // If star's gravity dominates, switch to star orbit
+          if (starInfluence > blackHoleInfluence * 1.5) {
+            targetOrbitSource = closestStarIndex;
+          }
+        }
+
+        // Smooth orbit transition
+        if (targetOrbitSource !== currentOrbitSource) {
+          // Gradually transition between orbital sources
+          particleOrbitTransition.current[i] += 0.02; // Transition speed
+
+          if (particleOrbitTransition.current[i] >= 1.0) {
+            // Complete transition
+            particleOrbitSource.current[i] = targetOrbitSource;
+            particleOrbitTransition.current[i] = 0.0;
+
+            // When switching to star orbit, add tangential velocity
+            if (targetOrbitSource >= 0) {
+              const si3 = targetOrbitSource * 3;
+              const starX = starPositions[si3];
+              const starY = starPositions[si3 + 1];
+
+              // Vector from star to particle
+              const dx = x - starX;
+              const dy = y - starY;
+              const radialDist = Math.sqrt(dx * dx + dy * dy);
+
+              // Add orbital velocity around star
+              const orbitalSpeed = Math.sqrt(starData[targetOrbitSource].mass / (radialDist + 0.05)) * 0.3;
+              vels[i3] += -dy / (radialDist + 0.001) * orbitalSpeed;
+              vels[i3 + 1] += dx / (radialDist + 0.001) * orbitalSpeed;
+            }
+          }
+        } else {
+          // Reset transition when staying with same source
+          particleOrbitTransition.current[i] = 0.0;
+        }
 
         // Apply velocity damping to prevent runaway speeds
         vels[i3] *= 0.995;
@@ -1343,6 +1614,27 @@ function BlackHole({
 
       const ageAttr = particleTrailsRef.current.geometry.attributes.age as THREE.BufferAttribute;
       ageAttr.needsUpdate = true;
+    }
+
+    // Update star trail shader and geometry
+    if (starTrailsRef.current) {
+      const material = starTrailsRef.current.material as THREE.ShaderMaterial;
+      if (material.uniforms) {
+        material.uniforms.time.value = time;
+      }
+
+      // Update star trail geometry positions (already updated in star orbit loop)
+      const posAttr = starTrailsRef.current.geometry.attributes.position;
+      posAttr.needsUpdate = true;
+
+      const ageAttr = starTrailsRef.current.geometry.attributes.age as THREE.BufferAttribute;
+      ageAttr.needsUpdate = true;
+    }
+
+    // Update star positions geometry
+    if (orbitingStarsRef.current) {
+      const posAttr = orbitingStarsRef.current.geometry.attributes.position;
+      posAttr.needsUpdate = true;
     }
   });
 
@@ -2003,6 +2295,23 @@ function BlackHole({
     return geom;
   }, [diskColors]);
 
+  // Star trail geometry - orbital paths of stars
+  const starTrailGeometry = useMemo(() => {
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.BufferAttribute(starTrailPositions.current, 3));
+    geom.setAttribute('age', new THREE.BufferAttribute(starTrailAges.current, 1));
+    geom.setAttribute('color', new THREE.BufferAttribute(starTrailColors.current, 3));
+    return geom;
+  }, []);
+
+  // Star geometry - the orbiting stars themselves
+  const starGeometry = useMemo(() => {
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+    geom.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
+    return geom;
+  }, [starPositions, starColors]);
+
   return (
     <group>
       {/* Event Horizon - Black sphere with high detail for smooth lensing */}
@@ -2124,6 +2433,24 @@ function BlackHole({
       {/* PARTICLE TRAILS - Motion history with custom shader */}
       <points ref={particleTrailsRef} geometry={trailGeometry}>
         <shaderMaterial {...particleTrailShader} />
+      </points>
+
+      {/* STAR ORBITAL TRAILS - Motion paths of orbiting stars */}
+      <points ref={starTrailsRef} geometry={starTrailGeometry}>
+        <shaderMaterial {...particleTrailShader} />
+      </points>
+
+      {/* ORBITING STARS - Gravitational attractors in outer disk */}
+      <points ref={orbitingStarsRef} geometry={starGeometry}>
+        <pointsMaterial
+          size={0.15}
+          vertexColors
+          transparent
+          opacity={0.95}
+          sizeAttenuation={true}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
       </points>
 
       {/* Enhanced Multi-Layer Glow Rings */}
