@@ -1275,6 +1275,9 @@ export const ThreeJsHero: React.FC = () => {
   const [enableDoppler, setEnableDoppler] = useState(true);
   const [enableLensing, setEnableLensing] = useState(true);
 
+  // Visual effects toggle for performance
+  const [enableVisualEffects, setEnableVisualEffects] = useState(true);
+
   // Theme system - based on PST time
   const getInitialTheme = () => {
     if (typeof window === 'undefined') return 'dark';
@@ -1491,6 +1494,31 @@ export const ThreeJsHero: React.FC = () => {
             </div>
           </div>
 
+          {/* Visual Effects */}
+          <div className="space-y-3 pt-3 border-t border-accent/20">
+            <h4 className="text-xs text-foreground/60 uppercase tracking-wider font-semibold">Visual Effects</h4>
+            <button
+              onClick={() => setEnableVisualEffects(!enableVisualEffects)}
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                setEnableVisualEffects(!enableVisualEffects);
+              }}
+              className={`w-full px-3 py-2.5 border rounded-lg text-xs font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer touch-manipulation ${
+                enableVisualEffects
+                  ? 'bg-accent/30 border-accent text-accent hover:bg-accent/40'
+                  : 'bg-primary/60 border-accent/30 text-foreground hover:bg-accent/20 hover:text-accent'
+              }`}
+              title="Toggle shooting stars and nebula effects for performance"
+            >
+              {enableVisualEffects ? '✓ Ambient Effects' : '○ Ambient Effects'}
+            </button>
+            <div className="text-xs text-foreground/50">
+              <p className="leading-relaxed">
+                Shooting stars and nebula clouds • Disable for better performance
+              </p>
+            </div>
+          </div>
+
           {/* Mouse Controls Guide */}
           <div className="space-y-2 pt-3 border-t border-accent/20">
             <h4 className="text-xs text-foreground/60 uppercase tracking-wider font-semibold">Mouse Controls</h4>
@@ -1572,8 +1600,12 @@ export const ThreeJsHero: React.FC = () => {
           theme={theme}
         />
         <StarField theme={theme} />
-        <ShootingStarTrail theme={theme} />
-        <NebulaCloud theme={theme} />
+        {enableVisualEffects && (
+          <>
+            <ShootingStarTrail theme={theme} />
+            <NebulaCloud theme={theme} />
+          </>
+        )}
       </Canvas>
     </div>
   );

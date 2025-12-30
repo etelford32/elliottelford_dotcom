@@ -3,7 +3,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ThreeJsHero } from './ThreeJsHero';
-import { ShootingStars } from './ShootingStars';
 import { Button } from '@/components/ui/Button';
 
 export const Hero: React.FC = () => {
@@ -11,9 +10,6 @@ export const Hero: React.FC = () => {
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Three.js Animated Background */}
       <ThreeJsHero />
-
-      {/* Interactive Shooting Stars */}
-      <ShootingStars />
 
       {/* Content */}
       <div className="container mx-auto px-6 lg:px-8 py-40 lg:py-48 relative z-10">
