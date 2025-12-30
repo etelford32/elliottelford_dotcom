@@ -611,16 +611,17 @@ function BlackHole({
   useFrame((state) => {
     const time = state.clock.getElapsedTime();
 
-    // Event horizon shader animation with camera position updates
+    // Event horizon shader animation with camera position and theme updates
     if (eventHorizonRef.current) {
       const material = eventHorizonRef.current.material as THREE.ShaderMaterial;
       if (material.uniforms) {
         material.uniforms.time.value = time;
         material.uniforms.cameraPosition.value.copy(state.camera.position);
+        material.uniforms.isLightMode.value = theme === 'light'; // Update theme in real-time
       }
     }
 
-    // Update accretion disk shader uniforms
+    // Update accretion disk shader uniforms with theme
     if (accretionDiskRef.current) {
       const material = accretionDiskRef.current.material as THREE.ShaderMaterial;
       if (material.uniforms) {
