@@ -834,6 +834,13 @@ function BlackHole({
       }
     }
 
+    // Debug: log star initial positions
+    console.log('Created', NUM_STARS, 'stars');
+    for (let i = 0; i < NUM_STARS; i++) {
+      const i3 = i * 3;
+      console.log(`Star ${i}: pos=(${starPositions[i3].toFixed(2)}, ${starPositions[i3+1].toFixed(2)}, ${starPositions[i3+2].toFixed(2)}), color=(${starColors[i3].toFixed(2)}, ${starColors[i3+1].toFixed(2)}, ${starColors[i3+2].toFixed(2)})`);
+    }
+
     return { starPositions, starColors, starVelocities, starData };
   }, []);
 
@@ -2309,6 +2316,8 @@ function BlackHole({
     const geom = new THREE.BufferGeometry();
     geom.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
     geom.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
+    console.log('Star geometry created with', starPositions.length / 3, 'vertices');
+    console.log('First star position:', starPositions[0], starPositions[1], starPositions[2]);
     return geom;
   }, [starPositions, starColors]);
 
@@ -2443,10 +2452,10 @@ function BlackHole({
       {/* ORBITING STARS - Gravitational attractors in outer disk */}
       <points ref={orbitingStarsRef} geometry={starGeometry}>
         <pointsMaterial
-          size={0.15}
+          size={0.8}
           vertexColors
           transparent
-          opacity={0.95}
+          opacity={1.0}
           sizeAttenuation={true}
           depthWrite={false}
           blending={THREE.AdditiveBlending}
