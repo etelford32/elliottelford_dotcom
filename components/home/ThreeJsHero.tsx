@@ -472,6 +472,10 @@ function BlackHole({
   const innerDiskRef = useRef<THREE.Points>(null);
   const polarJetsRef = useRef<THREE.Points>(null);
 
+  // Velocity storage for accretion disk particles
+  const diskVelocities = useRef<Float32Array>(new Float32Array(8000 * 3));
+  const innerDiskVelocities = useRef<Float32Array>(new Float32Array(2000 * 3));
+
   // 3D Volumetric Accretion disk particles with full physics
   const { diskPositions, diskColors, diskData } = useMemo(() => {
     const particleCount = 8000; // Increased for density
@@ -631,6 +635,12 @@ function BlackHole({
     if (accretionDiskRef.current) {
       const posAttr = accretionDiskRef.current.geometry.attributes.position;
       const positions = posAttr.array as Float32Array;
+      const vels = diskVelocities.current;
+
+      // Define accretion disk boundaries
+      const INNER_RADIUS = 0.9;  // Inner edge (just outside photon sphere)
+      const OUTER_RADIUS = 3.4;  // Outer edge of accretion disk
+      const EVENT_HORIZON = 0.75; // Schwarzschild radius
 
       for (let i = 0; i < positions.length / 3; i++) {
         const i3 = i * 3;
@@ -643,17 +653,44 @@ function BlackHole({
 
         const radius = Math.sqrt(x * x + y * y);
         const angle = Math.atan2(y, x);
+        const distToCenter = Math.sqrt(x * x + y * y + z * z);
 
-        // Keplerian orbital speed with relativistic frame-dragging
-        const baseSpeed = data.speed;
+        // GRAVITATIONAL ATTRACTION - Light force, stronger when closer
+        const gravityStrength = 0.0003; // Light initial gravity
+        const gravityForce = gravityStrength / (distToCenter * distToCenter + 0.05);
+
+        // Direction toward black hole center
+        const dirX = -x / distToCenter;
+        const dirY = -y / distToCenter;
+        const dirZ = -z / distToCenter;
+
+        // Apply gravitational pull to velocity
+        vels[i3] += dirX * gravityForce;
+        vels[i3 + 1] += dirY * gravityForce;
+        vels[i3 + 2] += dirZ * gravityForce;
+
+        // KEPLERIAN ORBITAL VELOCITY - Inner particles move faster
+        // v(r) = sqrt(GM/r), approximated as 1/sqrt(r)
+        const keplerianSpeed = 0.018 / Math.sqrt(radius + 0.3);
+
+        // Add tangential velocity (orbital motion)
+        vels[i3] += -y * keplerianSpeed;
+        vels[i3 + 1] += x * keplerianSpeed;
+
         // Frame-dragging: inner disk rotates faster due to spacetime dragging
-        const frameDrag = 0.003 / (radius * radius + 0.1);
-        const speed = baseSpeed + frameDrag;
-        const newAngle = angle + speed;
+        const frameDrag = 0.004 / (radius * radius + 0.1);
+        vels[i3] += -y * frameDrag;
+        vels[i3 + 1] += x * frameDrag;
 
-        // Update orbital position
-        let newX = Math.cos(newAngle) * radius;
-        let newY = Math.sin(newAngle) * radius;
+        // Apply velocity damping to prevent runaway speeds
+        vels[i3] *= 0.995;
+        vels[i3 + 1] *= 0.995;
+        vels[i3 + 2] *= 0.997;
+
+        // Update position based on velocity
+        let newX = x + vels[i3];
+        let newY = y + vels[i3 + 1];
+        let newZ = z + vels[i3 + 2];
 
         // Add 3D turbulence - chaotic eddies and vortices
         const turbulenceScale = 0.003 * (1.0 + Math.sin(data.turbulence * 100));
@@ -671,28 +708,58 @@ function BlackHole({
         // Magneto-rotational instability - creates vertical structure
         const mriTurbulence = Math.sin(time * 4 + radius * 5 + data.turbulence * 20) * 0.012;
 
-        const newZ = z + verticalOscillation + verticalWave + mriTurbulence;
+        newZ += verticalOscillation + verticalWave + mriTurbulence;
 
         // Spiral density waves - creates arm structure
         const spiralWave = Math.sin(angle * 3 - radius * 2 + time * 0.5) * 0.02;
-        const spiralRadius = radius * (1.0 + spiralWave);
 
-        newX = Math.cos(newAngle) * spiralRadius + turbX;
-        newY = Math.sin(newAngle) * spiralRadius + turbY;
+        const newRadius = Math.sqrt(newX * newX + newY * newY);
 
-        // Update positions
-        positions[i3] = newX;
-        positions[i3 + 1] = newY;
-        positions[i3 + 2] = newZ;
+        // BOUNDARY CONSTRAINTS - Keep particles within accretion disk
+        if (newRadius < INNER_RADIUS || newRadius > OUTER_RADIUS || distToCenter < EVENT_HORIZON) {
+          // Particle has escaped bounds or fell into black hole - respawn it
+          const spawnRadius = INNER_RADIUS + Math.random() * (OUTER_RADIUS - INNER_RADIUS);
+          const spawnAngle = Math.random() * Math.PI * 2;
+
+          // Respawn with thickness distribution
+          const maxThickness = 0.08 + (spawnRadius - 0.9) / 2.5 * 0.25;
+          const thicknessRandom = (Math.random() - 0.5) * 2;
+          const verticalDist = Math.sign(thicknessRandom) * Math.pow(Math.abs(thicknessRandom), 0.7);
+          const thickness = verticalDist * maxThickness;
+
+          positions[i3] = Math.cos(spawnAngle) * spawnRadius;
+          positions[i3 + 1] = Math.sin(spawnAngle) * spawnRadius;
+          positions[i3 + 2] = thickness;
+
+          // Reset velocity with initial orbital speed
+          const initialSpeed = 0.015 / Math.sqrt(spawnRadius);
+          vels[i3] = -Math.sin(spawnAngle) * initialSpeed;
+          vels[i3 + 1] = Math.cos(spawnAngle) * initialSpeed;
+          vels[i3 + 2] = 0;
+        } else {
+          // Apply spiral wave to radius
+          const finalRadius = newRadius * (1.0 + spiralWave);
+          const newAngle = Math.atan2(newY, newX);
+
+          positions[i3] = Math.cos(newAngle) * finalRadius;
+          positions[i3 + 1] = Math.sin(newAngle) * finalRadius;
+          positions[i3 + 2] = newZ;
+        }
       }
 
       posAttr.needsUpdate = true;
     }
 
-    // Inner super-hot disk layer - faster rotation
+    // Inner super-hot disk layer - PHOTON DISK with extreme relativistic effects
     if (innerDiskRef.current) {
       const posAttr = innerDiskRef.current.geometry.attributes.position;
       const positions = posAttr.array as Float32Array;
+      const vels = innerDiskVelocities.current;
+
+      // Photon disk boundaries - very close to event horizon
+      const PHOTON_INNER_RADIUS = 0.78;  // Just above event horizon
+      const PHOTON_OUTER_RADIUS = 1.08;  // Photon sphere boundary
+      const EVENT_HORIZON = 0.75;
 
       for (let i = 0; i < positions.length; i += 3) {
         const x = positions[i];
@@ -701,17 +768,77 @@ function BlackHole({
 
         const radius = Math.sqrt(x * x + y * y);
         const angle = Math.atan2(y, x);
+        const distToCenter = Math.sqrt(x * x + y * y + z * z);
 
-        // Very fast rotation near event horizon
-        const speed = 0.025 / Math.sqrt(radius + 0.05);
-        const newAngle = angle + speed;
+        // EXTREME GRAVITATIONAL ATTRACTION - Much stronger near event horizon
+        const gravityStrength = 0.0012; // 4x stronger than outer disk
+        const gravityForce = gravityStrength / (distToCenter * distToCenter + 0.01);
+
+        // Direction toward black hole
+        const dirX = -x / distToCenter;
+        const dirY = -y / distToCenter;
+        const dirZ = -z / distToCenter;
+
+        // Apply strong gravitational pull
+        vels[i] += dirX * gravityForce;
+        vels[i + 1] += dirY * gravityForce;
+        vels[i + 2] += dirZ * gravityForce;
+
+        // RELATIVISTIC VELOCITY - Near speed of light at photon sphere
+        // Photon sphere: v = c/sqrt(3) ≈ 0.577c
+        const relativisticSpeed = 0.035 / Math.sqrt(radius + 0.02);
+
+        // Add tangential orbital velocity
+        vels[i] += -y * relativisticSpeed;
+        vels[i + 1] += x * relativisticSpeed;
+
+        // Extreme frame-dragging near event horizon (Kerr metric)
+        const extremeFrameDrag = 0.008 / (radius * radius + 0.01);
+        vels[i] += -y * extremeFrameDrag;
+        vels[i + 1] += x * extremeFrameDrag;
+
+        // Less damping in photon disk (more chaotic)
+        vels[i] *= 0.992;
+        vels[i + 1] *= 0.992;
+        vels[i + 2] *= 0.994;
+
+        // Update position
+        let newX = x + vels[i];
+        let newY = y + vels[i + 1];
+        let newZ = z + vels[i + 2];
 
         // Intense turbulence near ISCO (innermost stable circular orbit)
-        const turbulence = Math.sin(time * 5 + i * 0.1) * 0.01;
+        const turbulence = Math.sin(time * 5 + i * 0.1) * 0.015;
+        newX += Math.cos(angle + time) * turbulence;
+        newY += Math.sin(angle + time) * turbulence;
 
-        positions[i] = Math.cos(newAngle) * (radius + turbulence);
-        positions[i + 1] = Math.sin(newAngle) * (radius + turbulence);
-        positions[i + 2] = z + Math.sin(time * 6 + i * 0.2) * 0.008;
+        // Vertical chaos from magnetic reconnection
+        const verticalChaos = Math.sin(time * 6 + i * 0.2) * 0.012;
+        newZ += verticalChaos;
+
+        const newRadius = Math.sqrt(newX * newX + newY * newY);
+
+        // PHOTON DISK BOUNDARY ENFORCEMENT
+        if (newRadius < PHOTON_INNER_RADIUS || newRadius > PHOTON_OUTER_RADIUS || distToCenter < EVENT_HORIZON) {
+          // Respawn in photon disk region
+          const spawnRadius = PHOTON_INNER_RADIUS + Math.random() * (PHOTON_OUTER_RADIUS - PHOTON_INNER_RADIUS);
+          const spawnAngle = Math.random() * Math.PI * 2;
+          const thickness = (Math.random() - 0.5) * 0.04; // Very thin disk
+
+          positions[i] = Math.cos(spawnAngle) * spawnRadius;
+          positions[i + 1] = Math.sin(spawnAngle) * spawnRadius;
+          positions[i + 2] = thickness;
+
+          // Reset with high initial velocity
+          const initialSpeed = 0.03 / Math.sqrt(spawnRadius);
+          vels[i] = -Math.sin(spawnAngle) * initialSpeed;
+          vels[i + 1] = Math.cos(spawnAngle) * initialSpeed;
+          vels[i + 2] = 0;
+        } else {
+          positions[i] = newX;
+          positions[i + 1] = newY;
+          positions[i + 2] = newZ;
+        }
       }
 
       posAttr.needsUpdate = true;
@@ -1324,6 +1451,44 @@ function BlackHole({
           color="#ff2200"
           transparent
           opacity={0.04}
+          side={THREE.DoubleSide}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+
+      {/* BOUNDARY VISUALIZATION SPHERES */}
+      {/* Outer accretion disk boundary - subtle containment sphere */}
+      <mesh>
+        <sphereGeometry args={[3.4, 64, 64]} />
+        <meshBasicMaterial
+          color="#ff3300"
+          transparent
+          opacity={0.02}
+          side={THREE.BackSide}
+          blending={THREE.AdditiveBlending}
+          wireframe={false}
+        />
+      </mesh>
+
+      {/* Inner photon disk boundary - bright photon sphere ring */}
+      <mesh>
+        <sphereGeometry args={[1.08, 64, 64]} />
+        <meshBasicMaterial
+          color="#ffff66"
+          transparent
+          opacity={0.05}
+          side={THREE.BackSide}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+
+      {/* Photon sphere marker ring - brightest at 1.5 * Schwarzschild radius */}
+      <mesh rotation={[Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[1.12, 1.125, 128]} />
+        <meshBasicMaterial
+          color="#ffee00"
+          transparent
+          opacity={0.4}
           side={THREE.DoubleSide}
           blending={THREE.AdditiveBlending}
         />
