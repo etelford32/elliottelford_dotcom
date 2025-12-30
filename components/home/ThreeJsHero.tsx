@@ -107,11 +107,10 @@ function StarField({ theme: _theme = 'dark' }: { theme?: 'light' | 'dark' }) {
   }, []);
 
   // Generate star positions with MUCH darker, more dramatic colors
-  const { positions, colors, glowPositions, starData } = useMemo(() => {
+  const { positions, colors, glowPositions } = useMemo(() => {
     const positions = new Float32Array(15000 * 3);
     const colors = new Float32Array(15000 * 3);
     const glowPositions = new Float32Array(400 * 3);
-    const starData: Array<{ x: number; y: number; z: number }> = [];
 
     // Main starfield with much darker, more vibrant colors
     for (let i = 0; i < 15000; i++) {
@@ -129,11 +128,6 @@ function StarField({ theme: _theme = 'dark' }: { theme?: 'light' | 'dark' }) {
       positions[i3] = x;
       positions[i3 + 1] = y;
       positions[i3 + 2] = z;
-
-      // Store some stars for flux ropes
-      if (i < 50) {
-        starData.push({ x, y, z });
-      }
 
       // BRIGHT, vivid UV color variation for black background
       const colorVariation = Math.random();
@@ -179,7 +173,7 @@ function StarField({ theme: _theme = 'dark' }: { theme?: 'light' | 'dark' }) {
       glowPositions[i3 + 2] = radius * Math.cos(phi);
     }
 
-    return { positions, colors, glowPositions, starData };
+    return { positions, colors, glowPositions };
   }, []);
 
   // Enhanced rotation with mouse parallax, shader updates, and black hole gravity
@@ -307,7 +301,9 @@ function StarField({ theme: _theme = 'dark' }: { theme?: 'light' | 'dark' }) {
 }
 
 // Flux ropes - magnetic field lines connecting stars
-function FluxRopes({ starData }: { starData: Array<{ x: number; y: number; z: number }> }) {
+// FluxRopes component - currently unused, may be enabled in future
+/* eslint-disable @typescript-eslint/no-unused-vars */
+function _FluxRopes({ starData }: { starData: Array<{ x: number; y: number; z: number }> }) {
   const { mouse } = useThree();
   const groupRef = useRef<THREE.Group>(null);
 
@@ -355,13 +351,14 @@ function FluxRopes({ starData }: { starData: Array<{ x: number; y: number; z: nu
   return (
     <group ref={groupRef}>
       {fluxRopes.map((rope) => (
-        <FluxRope key={rope.id} start={rope.start} end={rope.end} color={rope.color} />
+        <_FluxRope key={rope.id} start={rope.start} end={rope.end} color={rope.color} />
       ))}
     </group>
   );
 }
+/* eslint-enable @typescript-eslint/no-unused-vars */
 
-function FluxRope({ start, end, color }: { start: THREE.Vector3; end: THREE.Vector3; color: string }) {
+function _FluxRope({ start, end, color }: { start: THREE.Vector3; end: THREE.Vector3; color: string }) {
   const ref = useRef<any>(null);
 
   // Create curved path for flux rope
@@ -1232,7 +1229,7 @@ function BlackHole({
         // HELICAL MAGNETIC FIELD STRUCTURE
         // Toroidal and poloidal components create helical pattern
         const helixAngle = data.angle + height * 2.5; // Magnetic field winding
-        const helixAmplitude = jetRadius * (0.3 + Math.sin(time * 1.5 + height * 3) * 0.2);
+        // Helix amplitude: jetRadius * (0.3 + sin(1.5t + 3h) * 0.2)
 
         // Penrose process contribution (energy extraction from ergosphere)
         const penroseRadius = jetRadius * (1.0 + twistorField * 0.15);
@@ -1273,8 +1270,7 @@ function BlackHole({
         const phi = Math.acos(z / radius);
 
         // HOLOGRAPHIC PRINCIPLE: Information oscillates on 2D surface
-        // Quantum fluctuations create patterns
-        const infoFrequency = 5.0; // Information encoding frequency
+        // Quantum fluctuations create patterns (5.0 Hz frequency)
         const quantumFluctuation = Math.sin(time * 3.0 + angle * 7.0 + phi * 5.0) * 0.015;
 
         // Spherical harmonic patterns (like atomic orbitals)

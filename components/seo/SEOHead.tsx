@@ -101,9 +101,14 @@ export function generateSEOMetadata({
 }
 
 /**
+ * Type for structured data options
+ */
+type StructuredDataOptions = Record<string, unknown>;
+
+/**
  * Generate JSON-LD structured data for rich search results
  */
-export function generateStructuredData(type: 'person' | 'website' | 'article' | 'game', data?: any) {
+export function generateStructuredData(type: 'person' | 'website' | 'article' | 'game', data?: StructuredDataOptions) {
   const baseStructuredData = {
     '@context': 'https://schema.org',
   };
@@ -201,7 +206,7 @@ export function generateStructuredData(type: 'person' | 'website' | 'article' | 
 /**
  * Component to inject structured data into the page
  */
-export function StructuredData({ type, data }: { type: 'person' | 'website' | 'article' | 'game'; data?: any }) {
+export function StructuredData({ type, data }: { type: 'person' | 'website' | 'article' | 'game'; data?: StructuredDataOptions }) {
   const structuredData = generateStructuredData(type, data);
 
   return (
