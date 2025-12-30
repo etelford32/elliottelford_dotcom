@@ -301,8 +301,7 @@ function StarField({ theme: _theme = 'dark' }: { theme?: 'light' | 'dark' }) {
         />
       </Points>
 
-      {/* Pass star data for flux ropes */}
-      <FluxRopes starData={starData} />
+      {/* Flux ropes removed - causing random line artifacts */}
     </>
   );
 }
@@ -616,7 +615,6 @@ function BlackHole({
       const material = eventHorizonRef.current.material as THREE.ShaderMaterial;
       if (material.uniforms) {
         material.uniforms.time.value = time;
-        material.uniforms.cameraPosition.value.copy(state.camera.position);
         material.uniforms.isLightMode.value = theme === 'light'; // Update theme in real-time
       }
     }
@@ -626,7 +624,6 @@ function BlackHole({
       const material = accretionDiskRef.current.material as THREE.ShaderMaterial;
       if (material.uniforms) {
         material.uniforms.time.value = time;
-        material.uniforms.cameraPosition.value.copy(state.camera.position);
       }
     }
 
@@ -764,7 +761,6 @@ function BlackHole({
   const eventHorizonShader = useMemo(() => ({
     uniforms: {
       time: { value: 0 },
-      cameraPosition: { value: new THREE.Vector3(0, 0, 5) },
       isLightMode: { value: theme === 'light' }
     },
     vertexShader: `
@@ -795,7 +791,6 @@ function BlackHole({
     `,
     fragmentShader: `
       uniform float time;
-      uniform vec3 cameraPosition;
       uniform bool isLightMode;
       varying vec3 vNormal;
       varying vec3 vPosition;
@@ -947,7 +942,6 @@ function BlackHole({
   const accretionDiskShader = useMemo(() => ({
     uniforms: {
       time: { value: 0 },
-      cameraPosition: { value: new THREE.Vector3(3, 2, 6) },
       enableDoppler: { value: enableDopplerShift },
       enableLensing: { value: enableGravitationalLensing },
       blackHoleMass: { value: 1.0 },
@@ -955,7 +949,6 @@ function BlackHole({
     },
     vertexShader: `
       uniform float time;
-      uniform vec3 cameraPosition;
       uniform float blackHoleMass;
       uniform bool enableLensing;
       uniform float pixelRatio;
@@ -1045,7 +1038,6 @@ function BlackHole({
     fragmentShader: `
       uniform float time;
       uniform bool enableDoppler;
-      uniform vec3 cameraPosition;
 
       varying vec3 vColor;
       varying float vVelocity;

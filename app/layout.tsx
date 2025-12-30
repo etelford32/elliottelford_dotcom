@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Inter, Orbitron, Rajdhani, Space_Grotesk } from 'next/font/google';
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -6,6 +7,35 @@ import { DevBanner } from "@/components/layout/DevBanner";
 import { ScrollProgress } from "@/components/layout/ScrollProgress";
 import { generateSEOMetadata } from "@/components/seo/SEOHead";
 import { SITE_NAME } from "@/lib/constants";
+
+// Optimized font loading with Next.js
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700', '800', '900'],
+  variable: '--font-inter',
+  display: 'swap',
+});
+
+const orbitron = Orbitron({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800', '900'],
+  variable: '--font-orbitron',
+  display: 'swap',
+});
+
+const rajdhani = Rajdhani({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700'],
+  variable: '--font-rajdhani',
+  display: 'swap',
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700'],
+  variable: '--font-space-grotesk',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   ...generateSEOMetadata({
@@ -27,13 +57,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="scroll-smooth">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-      </head>
-      <body className="antialiased">
+    <html lang="en" className={`scroll-smooth ${inter.variable} ${orbitron.variable} ${rajdhani.variable} ${spaceGrotesk.variable}`}>
+      <body className={`antialiased ${inter.className}`}>
         <ScrollProgress />
         <DevBanner />
         <Header />

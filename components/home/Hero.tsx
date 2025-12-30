@@ -12,7 +12,7 @@ export const Hero: React.FC = () => {
       <ThreeJsHero />
 
       {/* Content */}
-      <div className="container mx-auto px-6 lg:px-8 py-40 lg:py-48 relative z-10">
+      <div className="container mx-auto px-6 lg:px-8 py-40 lg:py-48 relative z-10 pl-[10px]">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
