@@ -1647,9 +1647,9 @@ function BlackHole({
         vec4 mvPosition = modelViewMatrix * vec4(finalPosition, 1.0);
         gl_Position = projectionMatrix * mvPosition;
 
-        // Point size - SMALLER for 3D spherical disk (like holographic sphere)
-        float pointSize = (4.0 / -mvPosition.z) * pixelRatio; // Reduced for more numerous-looking particles
-        gl_PointSize = pointSize * (1.0 + vLensingFactor * 0.5); // Smaller with lensing
+        // Point size - LARGER for visible 3D particles (like holographic sphere)
+        float pointSize = (10.0 / -mvPosition.z) * pixelRatio; // Increased for distinct particle visibility
+        gl_PointSize = pointSize * (1.0 + vLensingFactor * 0.3); // Sharper lensing effect
       }
     `,
     fragmentShader: `
@@ -1669,14 +1669,18 @@ function BlackHole({
       const float photonSphere = 1.125; // Photon sphere at 1.5 * Schwarzschild radius
 
       void main() {
-        // Circular particle shape with soft falloff
+        // Circular particle shape with SHARP falloff for 3D definition
         vec2 center = gl_PointCoord - vec2(0.5);
         float dist = length(center);
         if (dist > 0.5) discard;
 
-        // Enhanced soft edge with bloom
-        float alpha = 1.0 - smoothstep(0.2, 0.5, dist);
-        alpha = pow(alpha, 1.2);
+        // SHARP edges with bright core for distinct 3D particles
+        float alpha = 1.0 - smoothstep(0.25, 0.5, dist); // Sharper edges
+        alpha = pow(alpha, 2.0); // Steeper falloff for definition
+
+        // BRIGHT CORE - Makes each particle visible and distinct
+        float coreBrightness = 1.0 - smoothstep(0.0, 0.15, dist);
+        coreBrightness = pow(coreBrightness, 3.0); // Very sharp core
 
         vec3 finalColor = vColor;
         float brightness = 1.0;
@@ -1761,9 +1765,9 @@ function BlackHole({
         rim = pow(rim, 2.0);
         brightness += rim * 0.8;
 
-        // Enhanced core glow effect for particles
-        float coreGlow = 1.0 - dist * 2.0;
-        coreGlow = pow(max(coreGlow, 0.0), 3.0); // Sharper falloff
+        // PARTICLE CORE DEFINITION - Bright center for 3D effect
+        float particleCoreGlow = 1.0 - dist * 2.0;
+        particleCoreGlow = pow(max(particleCoreGlow, 0.0), 3.0);
 
         // Inner disk extreme brightness
         float innerBoost = smoothstep(1.2, 0.8, vDistance) * 2.5;
@@ -1775,48 +1779,55 @@ function BlackHole({
         // Apply overall brightness
         finalColor *= brightness;
 
-        // INTENSE UV CORE BLOOM - Massive energy emission
-        vec3 uvCoreGlow = mix(
-          vec3(2.0, 1.8, 2.5),  // White-hot UV
-          vec3(0.8, 1.2, 2.8),  // Electric blue
-          coreGlow * 0.5
+        // Add DEFINED PARTICLE CORE - Makes each particle look 3D and distinct
+        vec3 particleCore = mix(
+          temperatureColor * 1.5,  // Temperature-based core
+          vec3(2.5, 2.3, 2.8),     // Brilliant white center
+          coreBrightness * 0.6
         );
-        finalColor += uvCoreGlow * coreGlow * 1.2;
+        finalColor += particleCore * coreBrightness * 0.8;
 
-        // HIGH-ENERGY PULSE EFFECTS - Multiple frequency components
+        // REDUCED UV CORE BLOOM - Less intense to avoid noise
+        vec3 uvCoreGlow = mix(
+          vec3(1.5, 1.4, 1.8),  // Softer white-UV
+          vec3(0.8, 1.2, 2.2),  // Electric blue
+          particleCoreGlow * 0.5
+        );
+        finalColor += uvCoreGlow * particleCoreGlow * 0.5; // Reduced intensity
+
+        // SUBTLE ENERGY PULSE - Reduced for clarity (not noise)
         float energyPulse1 = sin(time * 3.0 + vDistance * 5.0) * 0.5 + 0.5;
         float energyPulse2 = sin(time * 7.0 - vDistance * 8.0) * 0.5 + 0.5;
-        float energyPulse3 = sin(time * 11.0 + vDistance * 12.0) * 0.5 + 0.5;
 
-        // Combine pulses for complex energy pattern
-        float combinedPulse = (energyPulse1 + energyPulse2 * 0.5 + energyPulse3 * 0.3) / 1.8;
+        // Simplified pulse for less visual noise
+        float combinedPulse = (energyPulse1 * 0.6 + energyPulse2 * 0.4);
 
-        // UV pulse emission
+        // REDUCED UV pulse emission - subtle enhancement only
         vec3 uvPulseColor = mix(
-          vec3(1.6, 0.4, 2.2),  // Violet
-          vec3(0.6, 2.2, 2.5),  // UV cyan
+          vec3(1.2, 0.4, 1.6),  // Softer violet
+          vec3(0.6, 1.4, 1.8),  // Softer cyan
           combinedPulse
         );
-        finalColor += uvPulseColor * combinedPulse * 0.25 * temperature;
+        finalColor += uvPulseColor * combinedPulse * 0.08 * temperature; // Much reduced
 
-        // GAMMA RAY BURST effect (innermost regions)
-        if (vDistance < 1.0) {
-          float gammaIntensity = (1.0 - vDistance) * 2.0;
-          vec3 gammaColor = vec3(2.5, 2.3, 3.0); // Ultra-high energy white
+        // SUBTLE GAMMA RAY BURST - Only innermost regions, very reduced
+        if (vDistance < 0.95) {
+          float gammaIntensity = (0.95 - vDistance) * 1.5;
+          vec3 gammaColor = vec3(1.8, 1.7, 2.0); // Softer white
           float gammaBurst = sin(time * 15.0) * 0.5 + 0.5;
-          finalColor += gammaColor * gammaIntensity * gammaBurst * 0.4;
+          finalColor += gammaColor * gammaIntensity * gammaBurst * 0.15; // Much reduced
         }
 
-        // CHERENKOV RADIATION effect (superluminal particles)
+        // REDUCED CHERENKOV RADIATION - Subtle accent only
         float cherenkovAngle = atan(vPosition.y, vPosition.x);
         float cherenkovPattern = sin(cherenkovAngle * 8.0 - time * 10.0) * 0.5 + 0.5;
-        vec3 cherenkovBlue = vec3(0.3, 0.8, 3.0);
-        finalColor += cherenkovBlue * cherenkovPattern * 0.15 * temperature;
+        vec3 cherenkovBlue = vec3(0.4, 0.9, 2.0); // Softer blue
+        finalColor += cherenkovBlue * cherenkovPattern * 0.05 * temperature; // Much reduced
 
-        // Energy corona - brilliant halo around hottest particles
-        float corona = smoothstep(0.3, 0.0, dist);
-        vec3 coronaColor = vec3(2.2, 2.0, 2.8); // Brilliant white-violet
-        finalColor += coronaColor * corona * temperature * 0.6;
+        // SUBTLE PARTICLE HALO - Not corona, just soft edge glow
+        float halo = smoothstep(0.4, 0.1, dist);
+        vec3 haloColor = temperatureColor * 1.2; // Temperature-matched halo
+        finalColor += haloColor * halo * temperature * 0.2; // Reduced intensity
 
         // High dynamic range - allow massive overbright values for extreme energy
         gl_FragColor = vec4(finalColor, alpha * 0.9);
