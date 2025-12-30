@@ -78,7 +78,7 @@ export const Hero: React.FC = () => {
             className="max-w-4xl mx-auto"
           >
             <p className="text-xl md:text-2xl lg:text-3xl text-foreground/90 leading-relaxed font-body text-shadow-subtle tracking-wide">
-              Applying science and technology for humanity's optimization as a resilient,{' '}
+              Applying science and technology for humanity&apos;s optimization as a resilient,{' '}
               <span className="text-accent font-semibold text-shadow-glow">interstellar species</span>
             </p>
           </motion.div>

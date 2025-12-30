@@ -74,7 +74,7 @@ export const SocialFollow: React.FC = () => {
           <div className="inline-block mb-8">
             <div className="px-8 py-4 bg-accent/10 backdrop-blur-sm border border-accent/30 rounded-2xl">
               <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-accent">
-                Let's Connect
+                Let&apos;s Connect
               </h2>
             </div>
           </div>
@@ -137,7 +137,7 @@ export const SocialFollow: React.FC = () => {
             <div className="h-px flex-1 bg-gradient-to-r from-transparent via-accent/30 to-transparent" />
             <div className="px-6 py-3 bg-primary/40 backdrop-blur-sm border border-accent/20 rounded-xl">
               <span className="text-sm md:text-base text-foreground/70 uppercase tracking-wider font-medium">
-                Building Humanity's Interstellar Future
+                Building Humanity&apos;s Interstellar Future
               </span>
             </div>
             <div className="h-px flex-1 bg-gradient-to-r from-transparent via-accent/30 to-transparent" />

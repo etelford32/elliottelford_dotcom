@@ -46,8 +46,15 @@ export const PerformanceMonitor: React.FC = () => {
         const fps = Math.round((frameCount * 1000) / (currentTime - lastTime));
 
         // Get memory if available (Chrome only)
-        const memory = (performance as any).memory
-          ? Math.round((performance as any).memory.usedJSHeapSize / 1048576)
+        interface PerformanceMemory {
+          usedJSHeapSize: number;
+          totalJSHeapSize: number;
+          jsHeapSizeLimit: number;
+        }
+
+        const perfWithMemory = performance as Performance & { memory?: PerformanceMemory };
+        const memory = perfWithMemory.memory
+          ? Math.round(perfWithMemory.memory.usedJSHeapSize / 1048576)
           : undefined;
 
         setMetrics(prev => ({ ...prev, fps, memory }));

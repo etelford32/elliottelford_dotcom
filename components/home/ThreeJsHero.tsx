@@ -5,7 +5,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Points, PointMaterial, Line, OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 
-function StarField({ theme = 'dark' }: { theme?: 'light' | 'dark' }) {
+function StarField({ theme: _theme = 'dark' }: { theme?: 'light' | 'dark' }) {
   const ref = useRef<THREE.Points>(null);
   const glowRef = useRef<THREE.Points>(null);
   const { mouse } = useThree();
@@ -430,7 +430,7 @@ function ShootingStarTrail({ theme = 'dark' }: { theme?: 'light' | 'dark' }) {
   );
 }
 
-function ShootingStar({ progress, offset, theme = 'dark' }: { progress: number; offset: THREE.Vector3; theme?: 'light' | 'dark' }) {
+function ShootingStar({ progress, offset, theme: _theme = 'dark' }: { progress: number; offset: THREE.Vector3; theme?: 'light' | 'dark' }) {
   const ref = useRef<THREE.Mesh>(null);
 
   useFrame(() => {
@@ -673,7 +673,7 @@ function BlackHole({
         // Magneto-rotational instability - creates vertical structure
         const mriTurbulence = Math.sin(time * 4 + radius * 5 + data.turbulence * 20) * 0.012;
 
-        let newZ = z + verticalOscillation + verticalWave + mriTurbulence;
+        const newZ = z + verticalOscillation + verticalWave + mriTurbulence;
 
         // Spiral density waves - creates arm structure
         const spiralWave = Math.sin(angle * 3 - radius * 2 + time * 0.5) * 0.02;
@@ -1137,7 +1137,7 @@ function BlackHole({
   );
 }
 
-function NebulaCloud({ theme = 'dark' }: { theme?: 'light' | 'dark' }) {
+function NebulaCloud({ theme: _theme = 'dark' }: { theme?: 'light' | 'dark' }) {
   const meshRef = useRef<THREE.Mesh>(null);
 
   useFrame((state) => {
@@ -1486,7 +1486,7 @@ export const ThreeJsHero: React.FC = () => {
             </button>
             <div className="text-xs text-foreground/50 pt-2">
               <p className="leading-relaxed">
-                Based on "Interstellar" physics by Kip Thorne • Includes frame-dragging, Einstein deflection, and relativistic beaming
+                Based on &ldquo;Interstellar&rdquo; physics by Kip Thorne • Includes frame-dragging, Einstein deflection, and relativistic beaming
               </p>
             </div>
           </div>

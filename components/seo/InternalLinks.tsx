@@ -166,7 +166,7 @@ export const RelatedLinks: React.FC<RelatedLinksProps> = ({
 
           {/* Links Grid */}
           <div className="grid md:grid-cols-2 gap-6">
-            {links.map((link, index) => (
+            {links.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
