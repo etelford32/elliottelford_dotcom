@@ -5,7 +5,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Points, PointMaterial, Line, OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 
-function StarField() {
+function StarField({ theme = 'dark' }: { theme?: 'light' | 'dark' }) {
   const ref = useRef<THREE.Points>(null);
   const glowRef = useRef<THREE.Points>(null);
   const { mouse } = useThree();
@@ -400,7 +400,7 @@ function FluxRope({ start, end, color }: { start: THREE.Vector3; end: THREE.Vect
   );
 }
 
-function ShootingStarTrail() {
+function ShootingStarTrail({ theme = 'dark' }: { theme?: 'light' | 'dark' }) {
   const [stars, setStars] = useState<Array<{ id: number; progress: number; offset: THREE.Vector3 }>>([]);
 
   useFrame(() => {
@@ -424,13 +424,13 @@ function ShootingStarTrail() {
   return (
     <>
       {stars.map(star => (
-        <ShootingStar key={star.id} progress={star.progress} offset={star.offset} />
+        <ShootingStar key={star.id} progress={star.progress} offset={star.offset} theme={theme} />
       ))}
     </>
   );
 }
 
-function ShootingStar({ progress, offset }: { progress: number; offset: THREE.Vector3 }) {
+function ShootingStar({ progress, offset, theme = 'dark' }: { progress: number; offset: THREE.Vector3; theme?: 'light' | 'dark' }) {
   const ref = useRef<THREE.Mesh>(null);
 
   useFrame(() => {
@@ -459,7 +459,15 @@ function ShootingStar({ progress, offset }: { progress: number; offset: THREE.Ve
 }
 
 // Black Hole with Event Horizon and 3D Volumetric Accretion Disk
-function BlackHole({ enableDopplerShift = true, enableGravitationalLensing = true }: { enableDopplerShift?: boolean; enableGravitationalLensing?: boolean }) {
+function BlackHole({
+  enableDopplerShift = true,
+  enableGravitationalLensing = true,
+  theme = 'dark'
+}: {
+  enableDopplerShift?: boolean;
+  enableGravitationalLensing?: boolean;
+  theme?: 'light' | 'dark';
+}) {
   const eventHorizonRef = useRef<THREE.Mesh>(null);
   const accretionDiskRef = useRef<THREE.Points>(null);
   const innerDiskRef = useRef<THREE.Points>(null);
@@ -755,7 +763,8 @@ function BlackHole({ enableDopplerShift = true, enableGravitationalLensing = tru
   const eventHorizonShader = useMemo(() => ({
     uniforms: {
       time: { value: 0 },
-      cameraPosition: { value: new THREE.Vector3(0, 0, 5) }
+      cameraPosition: { value: new THREE.Vector3(0, 0, 5) },
+      isLightMode: { value: theme === 'light' }
     },
     vertexShader: `
       uniform float time;
@@ -786,6 +795,7 @@ function BlackHole({ enableDopplerShift = true, enableGravitationalLensing = tru
     fragmentShader: `
       uniform float time;
       uniform vec3 cameraPosition;
+      uniform bool isLightMode;
       varying vec3 vNormal;
       varying vec3 vPosition;
       varying vec3 vWorldPosition;
@@ -807,10 +817,24 @@ function BlackHole({ enableDopplerShift = true, enableGravitationalLensing = tru
         float angleShift = atan(vPosition.y, vPosition.x) / 3.14159;
         float timeShift = sin(time * 0.3) * 0.5 + 0.5;
 
-        // Multi-color gravitational lensing effect
-        vec3 lensingColor1 = vec3(0.5, 0.3, 0.9); // Purple
-        vec3 lensingColor2 = vec3(0.2, 0.6, 1.0); // Cyan
-        vec3 lensingColor3 = vec3(0.9, 0.4, 0.7); // Magenta
+        // Multi-color gravitational lensing effect (inverted for light mode)
+        vec3 lensingColor1, lensingColor2, lensingColor3, coreColor, photonColor;
+
+        if (isLightMode) {
+          // Light mode: inverted colors - bright white core, dark edges
+          lensingColor1 = vec3(0.7, 0.5, 0.1); // Golden
+          lensingColor2 = vec3(0.9, 0.7, 0.2); // Light gold
+          lensingColor3 = vec3(0.6, 0.4, 0.2); // Bronze
+          coreColor = vec3(0.98, 0.97, 0.95); // Almost white
+          photonColor = vec3(0.3, 0.25, 0.1); // Dark gold ring
+        } else {
+          // Dark mode: original colors
+          lensingColor1 = vec3(0.5, 0.3, 0.9); // Purple
+          lensingColor2 = vec3(0.2, 0.6, 1.0); // Cyan
+          lensingColor3 = vec3(0.9, 0.4, 0.7); // Magenta
+          coreColor = vec3(0.005, 0.003, 0.01); // Almost black
+          photonColor = vec3(1.0, 0.9, 0.8); // Bright white ring
+        }
 
         // Mix colors based on position and time
         vec3 colorA = mix(lensingColor1, lensingColor2, sin(angleShift + time * 0.2) * 0.5 + 0.5);
@@ -820,31 +844,32 @@ function BlackHole({ enableDopplerShift = true, enableGravitationalLensing = tru
         // Enhanced edge glow with lensing
         float edgeGlow = pow(fresnel, 1.8) * 0.4;
 
-        // Photon sphere visualization (bright ring just outside event horizon)
+        // Photon sphere visualization
         float photonSphere = smoothstep(0.55, 0.65, fresnel) * smoothstep(0.75, 0.65, fresnel);
         photonSphere *= (sin(time * 2.0 + angleShift * 10.0) * 0.3 + 0.7);
 
-        // Almost pure black core with increasing brightness at edges
-        vec3 coreColor = vec3(0.005, 0.003, 0.01);
-
         // Build final color with layers
         vec3 finalColor = coreColor;
-        finalColor += edgeColor * edgeGlow;
-        finalColor += edgeColor * lensingRing * 1.2;
-        finalColor += vec3(1.0, 0.9, 0.8) * photonSphere * 0.8; // Bright photon sphere
+        finalColor += edgeColor * edgeGlow * (isLightMode ? 0.6 : 1.0);
+        finalColor += edgeColor * lensingRing * (isLightMode ? 0.8 : 1.2);
+        finalColor += photonColor * photonSphere * 0.8;
 
         // Add subtle noise/static near event horizon
         float noise = fract(sin(dot(vPosition.xy, vec2(12.9898, 78.233)) + time) * 43758.5453);
-        finalColor += noise * 0.02 * fresnel;
+        finalColor += noise * 0.02 * fresnel * (isLightMode ? vec3(0.5, 0.4, 0.2) : vec3(1.0));
 
         // Hawking radiation subtle glow
         float hawkingGlow = pow(fresnel, 4.0) * 0.15 * (sin(time * 3.0) * 0.5 + 0.5);
-        finalColor += vec3(0.8, 0.9, 1.0) * hawkingGlow;
+        if (isLightMode) {
+          finalColor += vec3(0.6, 0.5, 0.3) * hawkingGlow;
+        } else {
+          finalColor += vec3(0.8, 0.9, 1.0) * hawkingGlow;
+        }
 
         gl_FragColor = vec4(finalColor, 1.0);
       }
     `
-  }), []);
+  }), [theme]);
 
   // Advanced accretion disk shader with Kip Thorne physics
   const accretionDiskShader = useMemo(() => ({
@@ -1112,7 +1137,7 @@ function BlackHole({ enableDopplerShift = true, enableGravitationalLensing = tru
   );
 }
 
-function NebulaCloud() {
+function NebulaCloud({ theme = 'dark' }: { theme?: 'light' | 'dark' }) {
   const meshRef = useRef<THREE.Mesh>(null);
 
   useFrame((state) => {
@@ -1188,10 +1213,12 @@ function NebulaCloud() {
 // Camera Controls Component with enhanced 3D exploration
 function CameraController({
   autoRotate,
-  cameraPreset
+  cameraPreset,
+  theme = 'dark'
 }: {
   autoRotate: boolean;
   cameraPreset: { position: [number, number, number]; target: [number, number, number] } | null;
+  theme?: 'light' | 'dark';
 }) {
   const controlsRef = useRef<any>(null);
   const { camera } = useThree();
@@ -1229,9 +1256,9 @@ function CameraController({
         maxPolarAngle={Math.PI}
       />
       {/* Ambient lighting for better depth perception */}
-      <ambientLight intensity={0.15} color="#6366f1" />
-      <pointLight position={[10, 10, 10]} intensity={0.3} color="#8b5cf6" />
-      <pointLight position={[-10, -10, -10]} intensity={0.2} color="#06b6d4" />
+      <ambientLight intensity={theme === 'dark' ? 0.15 : 0.3} color={theme === 'dark' ? "#6366f1" : "#fbbf24"} />
+      <pointLight position={[10, 10, 10]} intensity={theme === 'dark' ? 0.3 : 0.5} color={theme === 'dark' ? "#8b5cf6" : "#f59e0b"} />
+      <pointLight position={[-10, -10, -10]} intensity={theme === 'dark' ? 0.2 : 0.4} color={theme === 'dark' ? "#06b6d4" : "#fbbf24"} />
     </>
   );
 }
@@ -1247,6 +1274,32 @@ export const ThreeJsHero: React.FC = () => {
   // Physics toggles
   const [enableDoppler, setEnableDoppler] = useState(true);
   const [enableLensing, setEnableLensing] = useState(true);
+
+  // Theme system - based on PST time
+  const getInitialTheme = () => {
+    if (typeof window === 'undefined') return 'dark';
+
+    // Get current time in PST
+    const now = new Date();
+    const pstTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+    const hour = pstTime.getHours();
+
+    // Light mode: 6am - 6pm PST, Dark mode: 6pm - 6am PST
+    return (hour >= 6 && hour < 18) ? 'light' : 'dark';
+  };
+
+  const [theme, setTheme] = useState<'light' | 'dark'>(getInitialTheme);
+
+  // Update theme based on time
+  React.useEffect(() => {
+    const checkTime = () => {
+      setTheme(getInitialTheme());
+    };
+
+    // Check every minute
+    const interval = setInterval(checkTime, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Camera preset positions - optimized for dramatic viewing angles
   const presets = {
@@ -1428,6 +1481,15 @@ export const ThreeJsHero: React.FC = () => {
         </button>
       )}
 
+      {/* Theme Toggle - Below Camera Button */}
+      <button
+        onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+        className="absolute top-20 left-6 z-10 bg-primary/95 backdrop-blur-md border border-accent/40 rounded-lg px-4 py-2.5 font-mono text-xs text-foreground hover:bg-accent/30 hover:scale-105 transition-all shadow-lg pointer-events-auto flex items-center gap-2 font-semibold"
+        title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+      >
+        {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
+      </button>
+
       {/* Helper text for first-time users - only shows when controls are minimized */}
       {!showControls && (
         <div className="absolute bottom-6 left-6 z-10 bg-primary/80 backdrop-blur-md border border-accent/30 rounded-lg px-4 py-2 font-mono text-xs text-foreground/70 pointer-events-none shadow-lg max-w-xs animate-in fade-in slide-in-from-bottom-5 duration-500 delay-1000">
@@ -1437,15 +1499,22 @@ export const ThreeJsHero: React.FC = () => {
 
       <Canvas
         camera={{ position: [3, 2, 6], fov: 70 }}
-        style={{ background: 'transparent', cursor: 'grab' }}
+        style={{
+          background: theme === 'dark' ? 'transparent' : 'radial-gradient(ellipse at center, #e0e7ff 0%, #c7d2fe 100%)',
+          cursor: 'grab'
+        }}
         className="touch-none"
         dpr={[1, 2]}
       >
-        <CameraController autoRotate={autoRotate} cameraPreset={cameraPreset} />
-        <BlackHole enableDopplerShift={enableDoppler} enableGravitationalLensing={enableLensing} />
-        <StarField />
-        <ShootingStarTrail />
-        <NebulaCloud />
+        <CameraController autoRotate={autoRotate} cameraPreset={cameraPreset} theme={theme} />
+        <BlackHole
+          enableDopplerShift={enableDoppler}
+          enableGravitationalLensing={enableLensing}
+          theme={theme}
+        />
+        <StarField theme={theme} />
+        <ShootingStarTrail theme={theme} />
+        <NebulaCloud theme={theme} />
       </Canvas>
     </div>
   );
