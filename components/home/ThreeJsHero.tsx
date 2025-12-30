@@ -894,6 +894,9 @@ function BlackHole({
       varying float vVelocity;
       varying float vDistance;
       varying float vLensingFactor;
+      varying vec3 vPosition;
+      varying vec3 vWorldPosition;
+      varying vec3 vViewDirection;
 
       // Schwarzschild radius for gravitational calculations
       const float schwarzschildRadius = 0.75;
@@ -902,6 +905,7 @@ function BlackHole({
 
       void main() {
         vColor = color;
+        vPosition = position;
 
         // Calculate distance from black hole center
         float r = length(position);
@@ -914,17 +918,26 @@ function BlackHole({
 
         // Store velocity magnitude for Doppler shift
         vec3 viewDir = normalize(cameraPosition - position);
+        vViewDirection = viewDir;
         vVelocity = dot(velocity, viewDir);
 
         vec3 finalPosition = position;
 
         if (enableLensing) {
-          // Kip Thorne gravitational lensing - light bending
-          // Calculate deflection angle based on impact parameter
-          float impactParameter = r * sin(acos(dot(normalize(position), normalize(cameraPosition))));
+          // Kip Thorne gravitational lensing - ENHANCED
+          // Calculate impact parameter (closest approach distance for light ray)
+          float impactParameter = r * sin(acos(clamp(dot(normalize(position), normalize(cameraPosition)), -1.0, 1.0)));
 
-          // Einstein deflection angle: α = 4GM/(c²·b)
-          float deflectionAngle = (4.0 * G * blackHoleMass) / (c * c * impactParameter + 0.01);
+          // Einstein deflection angle: α = 4GM/(c²·b) - AMPLIFIED
+          float deflectionAngle = (4.0 * G * blackHoleMass) / (c * c * max(impactParameter, 0.01));
+
+          // Enhanced gravitational potential well warping
+          float gravitationalPotential = -G * blackHoleMass / (r + schwarzschildRadius * 0.1);
+          float warpingFactor = gravitationalPotential * 0.25; // Increased from 0.15
+
+          // Frame-dragging effect (Kerr metric) - ENHANCED spacetime rotation
+          float frameDragging = (schwarzschildRadius / r) * sin(time * 0.2 + r);
+          frameDragging *= 1.5; // Amplify frame-dragging
 
           // Apply lensing displacement perpendicular to radial direction
           vec3 radialDir = normalize(position);
@@ -934,89 +947,142 @@ function BlackHole({
           }
           perpDir = normalize(perpDir);
 
-          // Gravitational potential well warping
-          float gravitationalPotential = -G * blackHoleMass / (r + schwarzschildRadius * 0.1);
-          float warpingFactor = gravitationalPotential * 0.15;
-
-          // Frame-dragging effect (Kerr metric) - spacetime rotation
-          float frameDragging = (schwarzschildRadius / r) * sin(time * 0.2 + r);
-
-          // Apply combined gravitational effects
-          finalPosition += perpDir * deflectionAngle * 0.3;
+          // Apply combined gravitational effects - ENHANCED
+          finalPosition += perpDir * deflectionAngle * 0.5; // Increased from 0.3
           finalPosition += radialDir * warpingFactor;
-          finalPosition.xy += vec2(-finalPosition.y, finalPosition.x) * frameDragging * 0.05;
+          finalPosition.xy += vec2(-finalPosition.y, finalPosition.x) * frameDragging * 0.08; // Increased from 0.05
 
-          vLensingFactor = deflectionAngle;
+          // Store lensing factor for brightness enhancement
+          vLensingFactor = deflectionAngle * 2.0; // Amplified
         } else {
           vLensingFactor = 0.0;
         }
+
+        // World position for camera-reactive effects
+        vWorldPosition = (modelMatrix * vec4(finalPosition, 1.0)).xyz;
 
         // Project to screen space
         vec4 mvPosition = modelViewMatrix * vec4(finalPosition, 1.0);
         gl_Position = projectionMatrix * mvPosition;
 
-        // Point size with distance attenuation
-        float pointSize = (8.0 / -mvPosition.z) * pixelRatio;
-        gl_PointSize = pointSize * (1.0 + vLensingFactor * 0.5);
+        // Point size with distance attenuation and lensing magnification
+        float pointSize = (10.0 / -mvPosition.z) * pixelRatio; // Increased from 8.0
+        gl_PointSize = pointSize * (1.0 + vLensingFactor * 0.8); // Increased magnification
       }
     `,
     fragmentShader: `
       uniform float time;
       uniform bool enableDoppler;
+      uniform vec3 cameraPosition;
 
       varying vec3 vColor;
       varying float vVelocity;
       varying float vDistance;
       varying float vLensingFactor;
+      varying vec3 vPosition;
+      varying vec3 vWorldPosition;
+      varying vec3 vViewDirection;
 
       const float c = 1.0; // Speed of light
+      const float innerRadius = 0.8;  // Inner edge of accretion disk
+      const float photonSphere = 1.125; // Photon sphere at 1.5 * Schwarzschild radius
 
       void main() {
-        // Circular particle shape
+        // Circular particle shape with soft falloff
         vec2 center = gl_PointCoord - vec2(0.5);
         float dist = length(center);
         if (dist > 0.5) discard;
 
-        // Soft edge
-        float alpha = 1.0 - smoothstep(0.3, 0.5, dist);
-        alpha = pow(alpha, 1.5);
+        // Enhanced soft edge with bloom
+        float alpha = 1.0 - smoothstep(0.2, 0.5, dist);
+        alpha = pow(alpha, 1.2);
 
         vec3 finalColor = vColor;
         float brightness = 1.0;
 
+        // TEMPERATURE-BASED EMISSION (Wien's law approximation)
+        // Closer to event horizon = hotter = more energetic
+        float temperature = 1.0 / (vDistance + 0.3); // Inverse distance temperature
+        temperature = pow(temperature, 1.5);
+
+        // Temperature color shift (black body radiation)
+        vec3 temperatureColor = vec3(1.0);
+        if (temperature > 0.8) {
+          // Extremely hot - blue-white
+          temperatureColor = vec3(0.8, 0.9, 1.2) * (1.0 + temperature * 0.5);
+        } else if (temperature > 0.5) {
+          // Very hot - white-yellow
+          temperatureColor = vec3(1.2, 1.1, 0.9) * (1.0 + temperature * 0.3);
+        } else {
+          // Hot - orange-red
+          temperatureColor = vec3(1.3, 0.8, 0.5) * (1.0 + temperature * 0.2);
+        }
+
+        // PHOTON SPHERE LIGHTING - Brightest ring at 1.5 * Schwarzschild radius
+        float photonProximity = 1.0 - abs(vDistance - photonSphere) / 0.3;
+        photonProximity = clamp(photonProximity, 0.0, 1.0);
+        photonProximity = pow(photonProximity, 3.0);
+
+        // Photon sphere emission boost (ultra-bright)
+        float photonEmission = photonProximity * 3.5;
+        brightness += photonEmission;
+
+        // Add photon sphere color tint (bright white-blue)
+        finalColor = mix(finalColor, vec3(1.0, 0.95, 1.1), photonProximity * 0.6);
+
         if (enableDoppler) {
-          // Relativistic Doppler shift
-          // β = v/c (velocity as fraction of light speed)
-          float beta = vVelocity * 0.5; // Scale velocity
+          // Relativistic Doppler shift - ENHANCED
+          float beta = vVelocity * 0.5;
 
           // Doppler factor: δ = sqrt((1-β)/(1+β))
           float dopplerFactor = sqrt((1.0 - beta) / (1.0 + beta));
 
-          // Relativistic beaming - approaching side appears much brighter
+          // Relativistic beaming - AMPLIFIED
           float beamingFactor = 1.0 / pow(dopplerFactor, 3.0);
-          brightness *= (0.3 + beamingFactor * 0.7);
+          brightness *= (0.2 + beamingFactor * 0.8); // Enhanced contrast
 
-          // Blue-shift approaching, red-shift receding
+          // Enhanced blue-shift/red-shift
           if (beta > 0.0) {
-            // Approaching - blue shift
-            finalColor *= vec3(0.9, 0.95, 1.2);
+            // Approaching - strong blue shift with brightness boost
+            finalColor *= vec3(0.85, 0.92, 1.3) * (1.0 + beta * 0.5);
           } else {
-            // Receding - red shift
-            finalColor *= vec3(1.2, 0.9, 0.85);
+            // Receding - strong red shift with dimming
+            finalColor *= vec3(1.3, 0.85, 0.7) * (1.0 - abs(beta) * 0.3);
           }
         }
 
-        // Gravitational lensing brightness enhancement
-        brightness *= (1.0 + vLensingFactor * 2.0);
+        // GRAVITATIONAL LENSING BRIGHTNESS - MASSIVELY ENHANCED
+        brightness *= (1.0 + vLensingFactor * 4.0); // Increased from 2.0
 
-        // Glow effect for hot particles
-        float glow = 1.0 - dist * 2.0;
-        glow = pow(glow, 2.0);
+        // Camera-reactive rim lighting (edge glow when viewed from an angle)
+        vec3 normal = normalize(vec3(vPosition.xy, 0.1)); // Approximate disk normal
+        float rim = 1.0 - abs(dot(vViewDirection, normal));
+        rim = pow(rim, 2.0);
+        brightness += rim * 0.8;
 
+        // Enhanced core glow effect for particles
+        float coreGlow = 1.0 - dist * 2.0;
+        coreGlow = pow(max(coreGlow, 0.0), 3.0); // Sharper falloff
+
+        // Inner disk extreme brightness
+        float innerBoost = smoothstep(1.2, 0.8, vDistance) * 2.5;
+        brightness += innerBoost;
+
+        // Apply temperature-based emission
+        finalColor *= temperatureColor;
+
+        // Apply overall brightness
         finalColor *= brightness;
-        finalColor += vec3(1.0, 0.95, 0.9) * glow * 0.3;
 
-        gl_FragColor = vec4(finalColor, alpha * 0.85);
+        // Add intense core bloom
+        finalColor += vec3(1.2, 1.1, 1.0) * coreGlow * 0.8;
+
+        // Pulsing emission (simulates turbulent energy release)
+        float pulse = sin(time * 2.0 + vDistance * 3.0) * 0.5 + 0.5;
+        finalColor += finalColor * pulse * 0.15;
+
+        // High dynamic range - allow overbright values for bloom
+        gl_FragColor = vec4(finalColor, alpha * 0.9);
       }
     `,
     transparent: true,
