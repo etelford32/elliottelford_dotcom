@@ -802,71 +802,142 @@ function BlackHole({
       varying vec3 vWorldPosition;
       varying float vDistortion;
 
+      // Noise function for procedural effects
+      float noise(vec3 p) {
+        return fract(sin(dot(p, vec3(12.9898, 78.233, 45.5432))) * 43758.5453);
+      }
+
+      // Fractal Brownian Motion for complex patterns
+      float fbm(vec3 p) {
+        float value = 0.0;
+        float amplitude = 0.5;
+        for(int i = 0; i < 4; i++) {
+          value += amplitude * noise(p);
+          p *= 2.0;
+          amplitude *= 0.5;
+        }
+        return value;
+      }
+
       void main() {
         // Calculate view direction
         vec3 viewDir = normalize(cameraPosition - vWorldPosition);
 
-        // Fresnel effect for edge glow (stronger at glancing angles)
-        float fresnel = 1.0 - abs(dot(viewDir, vNormal));
-        fresnel = pow(fresnel, 2.5);
+        // Multi-layer Fresnel effects for depth
+        float fresnel1 = 1.0 - abs(dot(viewDir, vNormal));
+        float fresnel2 = pow(fresnel1, 2.0);  // Sharper inner edge
+        float fresnel3 = pow(fresnel1, 3.5);  // Even sharper core
+        float fresnel4 = pow(fresnel1, 5.0);  // Ultra-sharp center
 
-        // Gravitational lensing ring - appears at edge
-        float lensingRing = smoothstep(0.4, 0.6, fresnel) - smoothstep(0.6, 0.8, fresnel);
-        lensingRing *= 1.5;
+        // GRAVITATIONAL LENSING RINGS - Multiple visible rings
+        float lensingRing1 = smoothstep(0.3, 0.4, fresnel1) * smoothstep(0.5, 0.4, fresnel1);
+        float lensingRing2 = smoothstep(0.5, 0.6, fresnel1) * smoothstep(0.7, 0.6, fresnel1);
+        float lensingRing3 = smoothstep(0.7, 0.8, fresnel1) * smoothstep(0.9, 0.8, fresnel1);
+
+        // Animated ring pulsing
+        float pulse1 = sin(time * 1.5 + fresnel1 * 10.0) * 0.5 + 0.5;
+        float pulse2 = sin(time * 2.0 - fresnel1 * 8.0) * 0.5 + 0.5;
+        float pulse3 = sin(time * 2.5 + fresnel1 * 12.0) * 0.5 + 0.5;
+
+        lensingRing1 *= pulse1 * 1.8;
+        lensingRing2 *= pulse2 * 2.2;
+        lensingRing3 *= pulse3 * 2.5;
 
         // Color shifting based on angle and time
         float angleShift = atan(vPosition.y, vPosition.x) / 3.14159;
         float timeShift = sin(time * 0.3) * 0.5 + 0.5;
 
-        // Multi-color gravitational lensing effect (inverted for light mode)
-        vec3 lensingColor1, lensingColor2, lensingColor3, coreColor, photonColor;
+        // Procedural caustic patterns (like light through water)
+        vec3 causticPos = vWorldPosition * 3.0 + vec3(time * 0.2);
+        float caustic = fbm(causticPos);
+        caustic = pow(caustic, 2.0) * fresnel2 * 0.4;
+
+        // Theme-based colors with enhanced palette
+        vec3 lensingColor1, lensingColor2, lensingColor3, coreColor, photonColor, atmosphereColor;
 
         if (isLightMode) {
-          // Light mode: inverted colors - bright white core, dark edges
-          lensingColor1 = vec3(0.7, 0.5, 0.1); // Golden
-          lensingColor2 = vec3(0.9, 0.7, 0.2); // Light gold
-          lensingColor3 = vec3(0.6, 0.4, 0.2); // Bronze
-          coreColor = vec3(0.98, 0.97, 0.95); // Almost white
-          photonColor = vec3(0.3, 0.25, 0.1); // Dark gold ring
+          // Light mode: Bright celestial colors
+          lensingColor1 = vec3(1.0, 0.85, 0.3);  // Bright gold
+          lensingColor2 = vec3(0.95, 0.7, 0.15); // Orange-gold
+          lensingColor3 = vec3(0.8, 0.5, 0.1);   // Deep amber
+          coreColor = vec3(0.98, 0.97, 0.95);    // Almost white
+          photonColor = vec3(0.4, 0.35, 0.15);   // Dark gold ring
+          atmosphereColor = vec3(0.9, 0.8, 0.5); // Golden atmosphere
         } else {
-          // Dark mode: original colors
-          lensingColor1 = vec3(0.5, 0.3, 0.9); // Purple
-          lensingColor2 = vec3(0.2, 0.6, 1.0); // Cyan
-          lensingColor3 = vec3(0.9, 0.4, 0.7); // Magenta
-          coreColor = vec3(0.005, 0.003, 0.01); // Almost black
-          photonColor = vec3(1.0, 0.9, 0.8); // Bright white ring
+          // Dark mode: Vibrant cosmic colors
+          lensingColor1 = vec3(0.6, 0.3, 1.0);   // Vivid purple
+          lensingColor2 = vec3(0.2, 0.7, 1.2);   // Electric cyan
+          lensingColor3 = vec3(1.0, 0.4, 0.8);   // Bright magenta
+          coreColor = vec3(0.002, 0.001, 0.005); // Deep void black
+          photonColor = vec3(1.2, 1.0, 0.9);     // Brilliant white ring
+          atmosphereColor = vec3(0.4, 0.2, 0.8); // Purple atmosphere
         }
 
-        // Mix colors based on position and time
-        vec3 colorA = mix(lensingColor1, lensingColor2, sin(angleShift + time * 0.2) * 0.5 + 0.5);
-        vec3 colorB = mix(lensingColor2, lensingColor3, cos(angleShift - time * 0.15) * 0.5 + 0.5);
-        vec3 edgeColor = mix(colorA, colorB, timeShift);
+        // Complex color mixing with multiple layers
+        vec3 colorA = mix(lensingColor1, lensingColor2, sin(angleShift * 3.0 + time * 0.2) * 0.5 + 0.5);
+        vec3 colorB = mix(lensingColor2, lensingColor3, cos(angleShift * 2.0 - time * 0.15) * 0.5 + 0.5);
+        vec3 colorC = mix(lensingColor1, lensingColor3, sin(angleShift * 4.0 + time * 0.1) * 0.5 + 0.5);
+        vec3 edgeColor = mix(mix(colorA, colorB, timeShift), colorC, fresnel3);
 
-        // Enhanced edge glow with lensing
-        float edgeGlow = pow(fresnel, 1.8) * 0.4;
+        // VOLUMETRIC ATMOSPHERIC GLOW - Multiple layers
+        float atmosphere1 = pow(fresnel2, 1.5) * 0.6;  // Outer atmosphere
+        float atmosphere2 = pow(fresnel3, 1.8) * 0.8;  // Mid atmosphere
+        float atmosphere3 = pow(fresnel4, 2.0) * 1.0;  // Inner atmosphere
 
-        // Photon sphere visualization
-        float photonSphere = smoothstep(0.55, 0.65, fresnel) * smoothstep(0.75, 0.65, fresnel);
-        photonSphere *= (sin(time * 2.0 + angleShift * 10.0) * 0.3 + 0.7);
+        // PHOTON SPHERE - Ultra-bright ring with better definition
+        float photonSphere = smoothstep(0.50, 0.60, fresnel1) * smoothstep(0.75, 0.60, fresnel1);
+        photonSphere *= (sin(time * 2.5 + angleShift * 12.0) * 0.25 + 0.75);
+        photonSphere = pow(photonSphere, 1.5) * 2.5; // Amplified brightness
 
-        // Build final color with layers
+        // GRAVITATIONAL REDSHIFT EFFECT - Color shifts with depth
+        float redshift = 1.0 - fresnel1;
+        vec3 redshiftColor = mix(vec3(1.0), vec3(1.3, 0.7, 0.5), redshift * 0.3);
+
+        // Build final color with enhanced layering
         vec3 finalColor = coreColor;
-        finalColor += edgeColor * edgeGlow * (isLightMode ? 0.6 : 1.0);
-        finalColor += edgeColor * lensingRing * (isLightMode ? 0.8 : 1.2);
-        finalColor += photonColor * photonSphere * 0.8;
 
-        // Add subtle noise/static near event horizon
-        float noise = fract(sin(dot(vPosition.xy, vec2(12.9898, 78.233)) + time) * 43758.5453);
-        finalColor += noise * 0.02 * fresnel * (isLightMode ? vec3(0.5, 0.4, 0.2) : vec3(1.0));
+        // Add atmospheric layers
+        finalColor += atmosphereColor * atmosphere1 * (isLightMode ? 0.4 : 0.8);
+        finalColor += edgeColor * atmosphere2 * (isLightMode ? 0.6 : 1.2);
+        finalColor += edgeColor * atmosphere3 * (isLightMode ? 0.8 : 1.5);
 
-        // Hawking radiation subtle glow
-        float hawkingGlow = pow(fresnel, 4.0) * 0.15 * (sin(time * 3.0) * 0.5 + 0.5);
+        // Add lensing rings
+        finalColor += edgeColor * lensingRing1 * (isLightMode ? 1.0 : 1.5);
+        finalColor += edgeColor * lensingRing2 * (isLightMode ? 1.2 : 1.8);
+        finalColor += edgeColor * lensingRing3 * (isLightMode ? 1.4 : 2.0);
+
+        // Add ultra-bright photon sphere
+        finalColor += photonColor * photonSphere;
+
+        // Add caustic patterns
+        finalColor += edgeColor * caustic * (isLightMode ? 0.5 : 1.0);
+
+        // Apply gravitational redshift
+        finalColor *= redshiftColor;
+
+        // Procedural noise for quantum fluctuations
+        vec3 noisePos = vWorldPosition * 8.0 + vec3(time * 0.5);
+        float quantumNoise = noise(noisePos) * fresnel2 * 0.03;
+        finalColor += (isLightMode ? vec3(0.6, 0.5, 0.3) : vec3(0.8, 0.7, 1.0)) * quantumNoise;
+
+        // Hawking radiation with enhanced glow
+        float hawkingGlow = pow(fresnel4, 1.5) * 0.25 * (sin(time * 3.5) * 0.4 + 0.6);
         if (isLightMode) {
-          finalColor += vec3(0.6, 0.5, 0.3) * hawkingGlow;
+          finalColor += vec3(0.7, 0.6, 0.4) * hawkingGlow;
         } else {
-          finalColor += vec3(0.8, 0.9, 1.0) * hawkingGlow;
+          finalColor += vec3(0.9, 1.0, 1.2) * hawkingGlow;
         }
 
+        // Edge brightening for depth perception
+        float edgeBrightness = pow(fresnel2, 1.2) * 0.5;
+        finalColor += edgeColor * edgeBrightness;
+
+        // Add subtle color aberration (like a lens)
+        float aberration = fresnel3 * 0.15;
+        finalColor.r += aberration * (isLightMode ? 0.3 : 0.5);
+        finalColor.b += aberration * (isLightMode ? 0.2 : 0.6);
+
+        // Final HDR-ready output with overbright values
         gl_FragColor = vec4(finalColor, 1.0);
       }
     `
@@ -1134,6 +1205,46 @@ function BlackHole({
         />
       </mesh>
 
+      {/* Volumetric Atmospheric Glow - Multiple layers for depth */}
+      {/* Outer atmosphere - subtle large glow */}
+      <mesh>
+        <sphereGeometry args={[1.8, 64, 64]} />
+        <meshBasicMaterial
+          color={enableDopplerShift ? "#6366f1" : "#8b5cf6"}
+          transparent
+          opacity={0.03}
+          side={THREE.BackSide}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+        />
+      </mesh>
+
+      {/* Mid atmosphere - brighter inner glow */}
+      <mesh>
+        <sphereGeometry args={[1.2, 64, 64]} />
+        <meshBasicMaterial
+          color={enableGravitationalLensing ? "#a855f7" : "#8b5cf6"}
+          transparent
+          opacity={0.06}
+          side={THREE.BackSide}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+        />
+      </mesh>
+
+      {/* Inner atmosphere - intense close glow */}
+      <mesh>
+        <sphereGeometry args={[0.9, 64, 64]} />
+        <meshBasicMaterial
+          color="#c084fc"
+          transparent
+          opacity={0.10}
+          side={THREE.BackSide}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+        />
+      </mesh>
+
       {/* Main 3D Volumetric Accretion Disk with Kip Thorne Physics */}
       <points ref={accretionDiskRef} geometry={diskGeometry}>
         <shaderMaterial {...accretionDiskShader} />
@@ -1165,37 +1276,62 @@ function BlackHole({
         />
       </points>
 
-      {/* Inner glow ring - enhanced */}
+      {/* Enhanced Multi-Layer Glow Rings */}
+      {/* ISCO (Innermost Stable Circular Orbit) - Ultra-bright */}
       <mesh rotation={[Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[0.76, 1.2, 64]} />
+        <ringGeometry args={[0.76, 0.95, 128]} />
+        <meshBasicMaterial
+          color="#ffaa00"
+          transparent
+          opacity={0.35}
+          side={THREE.DoubleSide}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+
+      {/* Inner hot disk glow */}
+      <mesh rotation={[Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.95, 1.4, 96]} />
         <meshBasicMaterial
           color="#ff8800"
           transparent
-          opacity={0.2}
+          opacity={0.25}
           side={THREE.DoubleSide}
           blending={THREE.AdditiveBlending}
         />
       </mesh>
 
-      {/* Middle glow ring */}
+      {/* Middle transition zone */}
       <mesh rotation={[Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[1.2, 2.0, 64]} />
+        <ringGeometry args={[1.4, 2.2, 96]} />
         <meshBasicMaterial
-          color="#ff5500"
+          color="#ff6600"
           transparent
-          opacity={0.12}
+          opacity={0.18}
           side={THREE.DoubleSide}
           blending={THREE.AdditiveBlending}
         />
       </mesh>
 
-      {/* Outer glow ring */}
+      {/* Outer cooler disk */}
       <mesh rotation={[Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[2.0, 3.2, 64]} />
+        <ringGeometry args={[2.2, 3.2, 80]} />
         <meshBasicMaterial
-          color="#ff3300"
+          color="#ff4400"
           transparent
-          opacity={0.06}
+          opacity={0.10}
+          side={THREE.DoubleSide}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+
+      {/* Far outer diffuse glow */}
+      <mesh rotation={[Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[3.2, 4.5, 64]} />
+        <meshBasicMaterial
+          color="#ff2200"
+          transparent
+          opacity={0.04}
           side={THREE.DoubleSide}
           blending={THREE.AdditiveBlending}
         />
