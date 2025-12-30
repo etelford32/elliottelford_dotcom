@@ -471,10 +471,16 @@ function BlackHole({
   const accretionDiskRef = useRef<THREE.Points>(null);
   const innerDiskRef = useRef<THREE.Points>(null);
   const polarJetsRef = useRef<THREE.Points>(null);
+  const holographicDiskRef = useRef<THREE.Points>(null);
+  const magneticFieldLinesRef = useRef<THREE.Points>(null);
 
   // Velocity storage for accretion disk particles
   const diskVelocities = useRef<Float32Array>(new Float32Array(8000 * 3));
   const innerDiskVelocities = useRef<Float32Array>(new Float32Array(2000 * 3));
+
+  // Blandford-Znajek magnetic field state
+  const magneticFieldStrength = useRef<Float32Array>(new Float32Array(8000));
+  const spiralArmPhase = useRef<Float32Array>(new Float32Array(8000));
 
   // 3D Volumetric Accretion disk particles with full physics
   const { diskPositions, diskColors, diskData } = useMemo(() => {
@@ -487,6 +493,8 @@ function BlackHole({
       verticalPhase: number;
       turbulence: number;
       speed: number;
+      spiralArmIndex: number;
+      magneticFlux: number;
     }> = [];
 
     for (let i = 0; i < particleCount; i++) {
@@ -509,13 +517,23 @@ function BlackHole({
       diskPositions[i3 + 2] = thickness;
 
       // Store particle data for complex physics simulation
+      // Spiral arms: 3 major arms following logarithmic spiral pattern
+      const spiralArmIndex = Math.floor(Math.random() * 3);
+      const magneticFlux = 0.5 + Math.random() * 0.5; // Magnetic field threading through disk
+
       diskData.push({
         radius,
         angle,
         verticalPhase: Math.random() * Math.PI * 2, // For vertical oscillations
         turbulence: Math.random(), // Turbulent motion seed
-        speed: 0.015 / Math.sqrt(radius) // Keplerian speed
+        speed: 0.015 / Math.sqrt(radius), // Keplerian speed
+        spiralArmIndex, // Which spiral arm (0, 1, or 2)
+        magneticFlux // Poloidal magnetic field strength
       });
+
+      // Initialize magnetic field strength and spiral phase
+      magneticFieldStrength.current[i] = magneticFlux;
+      spiralArmPhase.current[i] = spiralArmIndex * (2 * Math.PI / 3);
 
       // Advanced temperature and color model
       // Temperature based on radius AND vertical height (cooler away from midplane)
@@ -572,6 +590,86 @@ function BlackHole({
     }
 
     return { innerDiskPositions, innerDiskColors };
+  }, []);
+
+  // HOLOGRAPHIC PHOTON DISK - Information-theoretic boundary layer
+  const { holographicPositions, holographicColors } = useMemo(() => {
+    const particleCount = 3000; // Dense holographic encoding
+    const holographicPositions = new Float32Array(particleCount * 3);
+    const holographicColors = new Float32Array(particleCount * 3);
+
+    for (let i = 0; i < particleCount; i++) {
+      const i3 = i * 3;
+
+      // Holographic photon sphere at r = 1.5 * Schwarzschild radius
+      const photonSphereRadius = 1.125; // Exact photon sphere
+      const angle = Math.random() * Math.PI * 2;
+      const phi = Math.random() * Math.PI;
+
+      // Information encoded on spherical shell (holographic principle)
+      const informationPattern = Math.sin(angle * 7 + phi * 5);
+      const radiusVariation = photonSphereRadius * (1.0 + informationPattern * 0.02);
+
+      holographicPositions[i3] = radiusVariation * Math.sin(phi) * Math.cos(angle);
+      holographicPositions[i3 + 1] = radiusVariation * Math.sin(phi) * Math.sin(angle);
+      holographicPositions[i3 + 2] = radiusVariation * Math.cos(phi);
+
+      // Holographic colors - quantum information patterns
+      // Encode in UV spectrum (high frequency photons)
+      const infoPhase = (angle + phi) % (Math.PI / 3);
+      if (infoPhase < Math.PI / 6) {
+        // High-energy photons (blue-violet)
+        holographicColors[i3] = 0.7 + Math.random() * 0.2;
+        holographicColors[i3 + 1] = 0.8 + Math.random() * 0.2;
+        holographicColors[i3 + 2] = 1.0;
+      } else {
+        // Ultra-high energy (white-blue)
+        holographicColors[i3] = 0.95 + Math.random() * 0.05;
+        holographicColors[i3 + 1] = 0.97 + Math.random() * 0.03;
+        holographicColors[i3 + 2] = 1.0;
+      }
+    }
+
+    return { holographicPositions, holographicColors };
+  }, []);
+
+  // MAGNETIC FIELD LINES - Blandford-Znajek threading
+  const { magneticLinePositions, magneticLineColors } = useMemo(() => {
+    const numLines = 50; // Number of field lines
+    const pointsPerLine = 60; // Points along each line
+    const totalPoints = numLines * pointsPerLine;
+    const magneticLinePositions = new Float32Array(totalPoints * 3);
+    const magneticLineColors = new Float32Array(totalPoints * 3);
+
+    for (let lineIdx = 0; lineIdx < numLines; lineIdx++) {
+      const startAngle = (lineIdx / numLines) * Math.PI * 2;
+      const startRadius = 0.9 + Math.random() * 0.4; // Start in inner disk
+
+      for (let pointIdx = 0; pointIdx < pointsPerLine; pointIdx++) {
+        const i3 = (lineIdx * pointsPerLine + pointIdx) * 3;
+        const t = pointIdx / pointsPerLine; // Parameter along field line
+
+        // Poloidal field line trajectory (from disk to jet)
+        const radius = startRadius * (1.0 - t * 0.3); // Spirals inward
+        const height = t * 3.5; // Extends upward
+        const angle = startAngle + t * Math.PI * 0.5; // Twists
+
+        // Random vertical direction
+        const direction = lineIdx % 2 === 0 ? 1 : -1;
+
+        magneticLinePositions[i3] = Math.cos(angle) * radius;
+        magneticLinePositions[i3 + 1] = Math.sin(angle) * radius;
+        magneticLinePositions[i3 + 2] = height * direction;
+
+        // Color based on field strength (brighter near black hole)
+        const fieldStrength = 1.0 - t;
+        magneticLineColors[i3] = 0.3 + fieldStrength * 0.5; // Red channel
+        magneticLineColors[i3 + 1] = 0.6 + fieldStrength * 0.3; // Green
+        magneticLineColors[i3 + 2] = 0.9 + fieldStrength * 0.1; // Blue (cyan)
+      }
+    }
+
+    return { magneticLinePositions, magneticLineColors };
   }, []);
 
   // Polar jets - relativistic particles shooting from poles
@@ -710,10 +808,50 @@ function BlackHole({
 
         newZ += verticalOscillation + verticalWave + mriTurbulence;
 
-        // Spiral density waves - creates arm structure
-        const spiralWave = Math.sin(angle * 3 - radius * 2 + time * 0.5) * 0.02;
+        // ENHANCED SPIRAL DENSITY WAVES - Multi-arm logarithmic spiral
+        // Logarithmic spiral: r = a * e^(b*θ) creates galaxy-like arms
+        const numArms = 3; // Three major spiral arms
+        const spiralTightness = 0.3; // How tightly wound the spiral is
+
+        // Calculate spiral arm pattern for this particle
+        const armPhase = spiralArmPhase.current[i];
+        const spiralPattern = Math.sin(numArms * angle - spiralTightness * radius - armPhase + time * 0.3);
+
+        // Density enhancement in spiral arms (particles concentrate here)
+        const armDensity = Math.exp(spiralPattern * 1.5) * 0.04;
+
+        // Magnetic pressure along spiral arms (Blandford-Znajek mechanism)
+        const magneticPressure = magneticFieldStrength.current[i] * armDensity * 0.015;
+
+        // Apply magnetic force perpendicular to orbital motion
+        const magneticForceAngle = angle + Math.PI / 2;
+        newX += Math.cos(magneticForceAngle) * magneticPressure;
+        newY += Math.sin(magneticForceAngle) * magneticPressure;
+
+        // Secondary spiral wave (creates sub-structure)
+        const secondarySpiral = Math.sin(angle * 5 - radius * 1.5 - time * 0.4) * 0.015;
+
+        // Combine spiral effects
+        const totalSpiralEffect = spiralPattern * 0.025 + secondarySpiral;
 
         const newRadius = Math.sqrt(newX * newX + newY * newY);
+
+        // BLANDFORD-ZNAJEK ENERGY EXTRACTION
+        // Extract rotational energy via magnetic field lines threading event horizon
+        if (radius < 1.5) { // Close to event horizon
+          // Magnetic field extracts energy and angular momentum
+          const bzExtraction = (1.5 - radius) * magneticFieldStrength.current[i] * 0.002;
+
+          // Energy flows outward along field lines (powers jets)
+          vels[i3 + 2] += Math.sign(z) * bzExtraction; // Vertical acceleration
+
+          // Angular momentum is extracted
+          vels[i3] *= (1.0 - bzExtraction * 0.1);
+          vels[i3 + 1] *= (1.0 - bzExtraction * 0.1);
+
+          // Update magnetic field strength (flux conservation)
+          magneticFieldStrength.current[i] *= (1.0 + bzExtraction * 0.05);
+        }
 
         // BOUNDARY CONSTRAINTS - Keep particles within accretion disk
         if (newRadius < INNER_RADIUS || newRadius > OUTER_RADIUS || distToCenter < EVENT_HORIZON) {
@@ -737,8 +875,8 @@ function BlackHole({
           vels[i3 + 1] = Math.cos(spawnAngle) * initialSpeed;
           vels[i3 + 2] = 0;
         } else {
-          // Apply spiral wave to radius
-          const finalRadius = newRadius * (1.0 + spiralWave);
+          // Apply spiral density wave to radius
+          const finalRadius = newRadius * (1.0 + totalSpiralEffect);
           const newAngle = Math.atan2(newY, newX);
 
           positions[i3] = Math.cos(newAngle) * finalRadius;
@@ -844,7 +982,7 @@ function BlackHole({
       posAttr.needsUpdate = true;
     }
 
-    // Polar jets - particles streaming out from poles
+    // Polar jets - BLANDFORD-ZNAJEK POWERED with PENROSE TWISTOR ACCELERATION
     if (polarJetsRef.current) {
       const posAttr = polarJetsRef.current.geometry.attributes.position;
       const positions = posAttr.array as Float32Array;
@@ -856,28 +994,142 @@ function BlackHole({
 
         const direction = i < jetData.length / 2 ? 1 : -1;
 
-        // Move particles upward along jet
-        let height = data.height + data.speed;
+        // PENROSE TWISTOR ACCELERATION
+        // Twistor theory: particles follow null geodesics in complexified spacetime
+        // Acceleration increases with height due to magnetic field energy extraction
+        const twistorPhase = time * 2.0 + data.angle * 3.0 + data.height * 1.5;
+        const twistorField = Math.sin(twistorPhase) * 0.5 + 0.5;
 
-        // Reset particles that reach the end
+        // Relativistic acceleration (approaches speed of light)
+        const baseSpeed = data.speed;
+        const twistorBoost = 1.0 + twistorField * 0.5; // Boost up to 1.5x
+        const relativisticSpeed = baseSpeed * twistorBoost * (1.0 + data.height * 0.1);
+
+        // Move particles upward along jet with acceleration
+        let height = data.height + relativisticSpeed;
+
+        // JET TRANSFORMS - particles recycle through ergosphere
         if (height > 4) {
+          // Particle reaches end of jet, returns energy to black hole
           height = 0;
+          // Randomize new trajectory slightly
+          data.angle = data.angle + (Math.random() - 0.5) * 0.3;
+          data.speed = 0.02 + Math.random() * 0.03; // Reset with new energy
         }
 
         data.height = height;
 
-        // Jet widens as it extends (collimation then expansion)
-        const collimation = height < 1 ? height : 1;
+        // MAGNETIC COLLIMATION - Blandford-Znajek mechanism
+        // Initial collimation near black hole, then expansion at larger scales
+        const collimationStrength = Math.exp(-height * 0.5); // Exponential decay
+        const collimatedRadius = 0.05 * (1.0 - collimationStrength * 0.7);
+
+        // Expansion due to radiation pressure and particle interactions
         const expansion = height > 1 ? (height - 1) * 0.15 : 0;
-        const jetRadius = 0.05 * collimation + expansion;
 
-        // Helical structure from magnetic fields
-        const helixAngle = data.angle + height * 2;
-        const helixRadius = jetRadius * (1 + Math.sin(time * 2 + height * 5) * 0.3);
+        // Total jet radius with magnetic pinching
+        const jetRadius = collimatedRadius + expansion;
 
-        positions[i3] = Math.cos(helixAngle) * helixRadius;
-        positions[i3 + 1] = Math.sin(helixAngle) * helixRadius;
+        // HELICAL MAGNETIC FIELD STRUCTURE
+        // Toroidal and poloidal components create helical pattern
+        const helixAngle = data.angle + height * 2.5; // Magnetic field winding
+        const helixAmplitude = jetRadius * (0.3 + Math.sin(time * 1.5 + height * 3) * 0.2);
+
+        // Penrose process contribution (energy extraction from ergosphere)
+        const penroseRadius = jetRadius * (1.0 + twistorField * 0.15);
+
+        // HOLOGRAPHIC PROJECTION - particles trace out holographic boundary
+        // Information encoded on 2D surface projects to 3D jet structure
+        const holographicAngle = helixAngle + Math.sin(time * 3.0 + height * 2.0) * 0.4;
+        const holographicRadius = penroseRadius * (1.0 + Math.cos(time * 2.5 - height * 4.0) * 0.1);
+
+        positions[i3] = Math.cos(holographicAngle) * holographicRadius;
+        positions[i3 + 1] = Math.sin(holographicAngle) * holographicRadius;
         positions[i3 + 2] = (0.8 + height) * direction;
+
+        // Add chaotic perturbations from turbulent plasma
+        if (height < 0.5) {
+          // Near launch point, strong turbulence
+          const turbulence = Math.sin(time * 10 + i * 0.5) * 0.02;
+          positions[i3] += turbulence;
+          positions[i3 + 1] += turbulence * 0.8;
+        }
+      }
+
+      posAttr.needsUpdate = true;
+    }
+
+    // HOLOGRAPHIC PHOTON DISK - Information-theoretic animation
+    if (holographicDiskRef.current) {
+      const posAttr = holographicDiskRef.current.geometry.attributes.position;
+      const positions = posAttr.array as Float32Array;
+
+      for (let i = 0; i < positions.length; i += 3) {
+        const x = positions[i];
+        const y = positions[i + 1];
+        const z = positions[i + 2];
+
+        const radius = Math.sqrt(x * x + y * y + z * z);
+        const angle = Math.atan2(y, x);
+        const phi = Math.acos(z / radius);
+
+        // HOLOGRAPHIC PRINCIPLE: Information oscillates on 2D surface
+        // Quantum fluctuations create patterns
+        const infoFrequency = 5.0; // Information encoding frequency
+        const quantumFluctuation = Math.sin(time * 3.0 + angle * 7.0 + phi * 5.0) * 0.015;
+
+        // Spherical harmonic patterns (like atomic orbitals)
+        const l = 3; // Angular momentum quantum number
+        const m = 2; // Magnetic quantum number
+        const sphericalHarmonic = Math.sin(l * phi) * Math.cos(m * angle + time * 2.0);
+
+        // Radius pulsation with quantum signature
+        const photonSphereRadius = 1.125;
+        const newRadius = photonSphereRadius * (1.0 + quantumFluctuation + sphericalHarmonic * 0.01);
+
+        // Update positions on holographic shell
+        positions[i] = newRadius * Math.sin(phi) * Math.cos(angle);
+        positions[i + 1] = newRadius * Math.sin(phi) * Math.sin(angle);
+        positions[i + 2] = newRadius * Math.cos(phi);
+      }
+
+      posAttr.needsUpdate = true;
+
+      // Rotate holographic shell slowly (frame-dragging effect)
+      holographicDiskRef.current.rotation.z += 0.002;
+    }
+
+    // MAGNETIC FIELD LINES - Animate with field oscillations
+    if (magneticFieldLinesRef.current) {
+      const posAttr = magneticFieldLinesRef.current.geometry.attributes.position;
+      const positions = posAttr.array as Float32Array;
+
+      const numLines = 50;
+      const pointsPerLine = 60;
+
+      for (let lineIdx = 0; lineIdx < numLines; lineIdx++) {
+        const linePhase = (lineIdx / numLines) * Math.PI * 2;
+
+        for (let pointIdx = 0; pointIdx < pointsPerLine; pointIdx++) {
+          const i3 = (lineIdx * pointsPerLine + pointIdx) * 3;
+          const t = pointIdx / pointsPerLine;
+
+          // Magnetic field oscillation (Alfvén waves)
+          const waveAmplitude = 0.02;
+          const waveFrequency = 2.0;
+          const alfvenWave = Math.sin(time * waveFrequency - t * 10.0 + linePhase) * waveAmplitude;
+
+          // Apply wave perturbation
+          const baseX = positions[i3];
+          const baseY = positions[i3 + 1];
+          const angle = Math.atan2(baseY, baseX);
+
+          positions[i3] += Math.cos(angle + Math.PI / 2) * alfvenWave;
+          positions[i3 + 1] += Math.sin(angle + Math.PI / 2) * alfvenWave;
+
+          // Vertical wave propagation (energy transport)
+          positions[i3 + 2] += Math.sin(time * 3.0 + t * 8.0) * 0.01;
+        }
       }
 
       posAttr.needsUpdate = true;
@@ -1303,6 +1555,20 @@ function BlackHole({
     return geom;
   }, [jetPositions, jetColors]);
 
+  const holographicGeometry = useMemo(() => {
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.BufferAttribute(holographicPositions, 3));
+    geom.setAttribute('color', new THREE.BufferAttribute(holographicColors, 3));
+    return geom;
+  }, [holographicPositions, holographicColors]);
+
+  const magneticFieldGeometry = useMemo(() => {
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.BufferAttribute(magneticLinePositions, 3));
+    geom.setAttribute('color', new THREE.BufferAttribute(magneticLineColors, 3));
+    return geom;
+  }, [magneticLinePositions, magneticLineColors]);
+
   return (
     <group>
       {/* Event Horizon - Black sphere with high detail for smooth lensing */}
@@ -1389,6 +1655,32 @@ function BlackHole({
           vertexColors
           transparent
           opacity={0.7}
+          sizeAttenuation={true}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </points>
+
+      {/* HOLOGRAPHIC PHOTON DISK - Information-theoretic shell */}
+      <points ref={holographicDiskRef} geometry={holographicGeometry}>
+        <pointsMaterial
+          size={0.018}
+          vertexColors
+          transparent
+          opacity={0.6}
+          sizeAttenuation={true}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </points>
+
+      {/* MAGNETIC FIELD LINES - Blandford-Znajek threading */}
+      <points ref={magneticFieldLinesRef} geometry={magneticFieldGeometry}>
+        <pointsMaterial
+          size={0.012}
+          vertexColors
+          transparent
+          opacity={0.4}
           sizeAttenuation={true}
           depthWrite={false}
           blending={THREE.AdditiveBlending}
