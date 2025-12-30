@@ -1323,9 +1323,37 @@ export const ThreeJsHero: React.FC = () => {
   };
 
   return (
-    <div className="absolute inset-0 -z-10">
-      {/* UI Layer - Always on top with proper z-index */}
-      <div className="absolute inset-0 z-50 pointer-events-none">
+    <>
+      {/* Canvas Background - Behind everything */}
+      <div className="absolute inset-0 -z-10 pointer-events-none">
+        <Canvas
+          camera={{ position: [3, 2, 6], fov: 70 }}
+          style={{
+            background: theme === 'dark' ? 'transparent' : 'radial-gradient(ellipse at center, #e0e7ff 0%, #c7d2fe 100%)',
+            cursor: 'grab',
+            pointerEvents: 'auto'
+          }}
+          className="touch-none"
+          dpr={[1, 2]}
+        >
+          <CameraController autoRotate={autoRotate} cameraPreset={cameraPreset} theme={theme} />
+          <BlackHole
+            enableDopplerShift={enableDoppler}
+            enableGravitationalLensing={enableLensing}
+            theme={theme}
+          />
+          <StarField theme={theme} />
+          {enableVisualEffects && (
+            <>
+              <ShootingStarTrail theme={theme} />
+              <NebulaCloud theme={theme} />
+            </>
+          )}
+        </Canvas>
+      </div>
+
+      {/* UI Controls Layer - Above everything */}
+      <div className="fixed inset-0 z-50 pointer-events-none">
         {/* 3D Camera Controls UI Panel */}
         {showControls && (
           <div className="absolute top-6 left-6 bg-primary/95 backdrop-blur-md border border-accent/40 rounded-xl p-5 space-y-4 font-mono text-sm pointer-events-auto shadow-2xl max-w-xs animate-in fade-in slide-in-from-left-5 duration-300">
@@ -1583,30 +1611,6 @@ export const ThreeJsHero: React.FC = () => {
           </div>
         )}
       </div>
-
-      <Canvas
-        camera={{ position: [3, 2, 6], fov: 70 }}
-        style={{
-          background: theme === 'dark' ? 'transparent' : 'radial-gradient(ellipse at center, #e0e7ff 0%, #c7d2fe 100%)',
-          cursor: 'grab'
-        }}
-        className="touch-none"
-        dpr={[1, 2]}
-      >
-        <CameraController autoRotate={autoRotate} cameraPreset={cameraPreset} theme={theme} />
-        <BlackHole
-          enableDopplerShift={enableDoppler}
-          enableGravitationalLensing={enableLensing}
-          theme={theme}
-        />
-        <StarField theme={theme} />
-        {enableVisualEffects && (
-          <>
-            <ShootingStarTrail theme={theme} />
-            <NebulaCloud theme={theme} />
-          </>
-        )}
-      </Canvas>
-    </div>
+    </>
   );
 };
