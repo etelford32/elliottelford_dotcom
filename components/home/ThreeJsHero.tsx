@@ -473,10 +473,21 @@ function BlackHole({
   const polarJetsRef = useRef<THREE.Points>(null);
   const holographicDiskRef = useRef<THREE.Points>(null);
   const magneticFieldLinesRef = useRef<THREE.Points>(null);
+  const particleTrailsRef = useRef<THREE.Points>(null);
 
   // Velocity storage for accretion disk particles
   const diskVelocities = useRef<Float32Array>(new Float32Array(8000 * 3));
   const innerDiskVelocities = useRef<Float32Array>(new Float32Array(2000 * 3));
+
+  // Angular momentum and transform state
+  const angularMomentum = useRef<Float32Array>(new Float32Array(8000));
+  const polarAngle = useRef<Float32Array>(new Float32Array(8000)); // Theta in spherical coords
+  const azimuthalAngle = useRef<Float32Array>(new Float32Array(8000)); // Phi in spherical coords
+
+  // Particle trail history (last N positions for each particle)
+  const TRAIL_LENGTH = 20;
+  const trailPositions = useRef<Float32Array>(new Float32Array(8000 * TRAIL_LENGTH * 3));
+  const trailAges = useRef<Float32Array>(new Float32Array(8000 * TRAIL_LENGTH));
 
   // Blandford-Znajek magnetic field state
   const magneticFieldStrength = useRef<Float32Array>(new Float32Array(8000));
@@ -534,6 +545,28 @@ function BlackHole({
       // Initialize magnetic field strength and spiral phase
       magneticFieldStrength.current[i] = magneticFlux;
       spiralArmPhase.current[i] = spiralArmIndex * (2 * Math.PI / 3);
+
+      // Initialize angular momentum (L = r × v)
+      // For Keplerian orbit: L = r * v = r * sqrt(GM/r) = sqrt(GMr)
+      const L = Math.sqrt(radius) * 0.5; // Normalized angular momentum
+      angularMomentum.current[i] = L;
+
+      // Initialize spherical coordinates
+      // Convert (x, y, z) to (r, θ, φ)
+      const r = Math.sqrt(diskPositions[i3] * diskPositions[i3] + diskPositions[i3 + 1] * diskPositions[i3 + 1] + diskPositions[i3 + 2] * diskPositions[i3 + 2]);
+      const theta = Math.acos(diskPositions[i3 + 2] / r); // Polar angle from z-axis
+      const phi = Math.atan2(diskPositions[i3 + 1], diskPositions[i3]); // Azimuthal angle
+      polarAngle.current[i] = theta;
+      azimuthalAngle.current[i] = phi;
+
+      // Initialize trail positions (all start at particle position)
+      for (let t = 0; t < TRAIL_LENGTH; t++) {
+        const trailIdx = i * TRAIL_LENGTH + t;
+        trailPositions.current[trailIdx * 3] = diskPositions[i3];
+        trailPositions.current[trailIdx * 3 + 1] = diskPositions[i3 + 1];
+        trailPositions.current[trailIdx * 3 + 2] = diskPositions[i3 + 2];
+        trailAges.current[trailIdx] = t / TRAIL_LENGTH;
+      }
 
       // Advanced temperature and color model
       // Temperature based on radius AND vertical height (cooler away from midplane)
@@ -851,7 +884,91 @@ function BlackHole({
 
           // Update magnetic field strength (flux conservation)
           magneticFieldStrength.current[i] *= (1.0 + bzExtraction * 0.05);
+
+          // Update angular momentum after extraction
+          angularMomentum.current[i] *= (1.0 - bzExtraction * 0.1);
         }
+
+        // ANGULAR MOMENTUM TRANSFORM & SPHERICAL SPIRAL DYNAMICS
+        // Update spherical coordinates
+        const r = Math.sqrt(newX * newX + newY * newY + newZ * newZ);
+        const theta = Math.acos(newZ / (r + 0.001)); // Polar angle from z-axis
+        const phi = Math.atan2(newY, newX); // Azimuthal angle
+
+        polarAngle.current[i] = theta;
+        azimuthalAngle.current[i] = phi;
+
+        // POLAR POLARIZATION - Particles align toward poles
+        // Creates vertical component to spiral motion
+        const polarizationStrength = 0.015;
+        const distFromEquator = Math.abs(theta - Math.PI / 2); // Distance from equatorial plane
+
+        // Polarization force toward nearest pole (north or south)
+        const polarDirection = theta < Math.PI / 2 ? -1 : 1; // North or south
+        const polarForce = polarizationStrength * Math.sin(distFromEquator * 2);
+
+        // Apply polar transform (moves particles toward/away from poles)
+        const polarVelocity = polarForce * polarDirection;
+        newZ += polarVelocity * Math.cos(time * 0.5 + phi * 3);
+
+        // SPHERICAL SPIRAL DYNAMICS - 3D spirals on disk surface
+        // Combines azimuthal rotation with polar motion
+        const sphericalSpiralTightness = 0.5;
+        const sphericalArmPattern = Math.sin(3 * phi - sphericalSpiralTightness * theta - time * 0.4);
+
+        // Radial pulsation from spherical spiral
+        const radialPulse = sphericalArmPattern * 0.02;
+        newX *= (1.0 + radialPulse);
+        newY *= (1.0 + radialPulse);
+
+        // Vertical component from spherical spiral (creates 3D helix)
+        const verticalSpiral = Math.cos(phi * 5 + theta * 3 - time * 0.3) * 0.01;
+        newZ += verticalSpiral * Math.sin(distFromEquator);
+
+        // ANGULAR MOMENTUM CONSERVATION
+        // L = r × v must be conserved
+        const currentL = Math.sqrt(newX * newX + newY * newY) * Math.sqrt(vels[i3] * vels[i3] + vels[i3 + 1] * vels[i3 + 1]);
+        const targetL = angularMomentum.current[i];
+
+        // Adjust velocities to conserve angular momentum
+        if (currentL > 0.001) {
+          const lFactor = targetL / currentL;
+          vels[i3] *= lFactor;
+          vels[i3 + 1] *= lFactor;
+        }
+
+        // TRANSFORM FUNCTION - Coordinate transformation for z-axis symmetry
+        // Apply rotation around z-axis based on angular momentum
+        const rotationRate = angularMomentum.current[i] / (r * r + 0.1);
+        const deltaAngle = rotationRate * 0.01;
+
+        // Rotate position in xy-plane
+        const cosDA = Math.cos(deltaAngle);
+        const sinDA = Math.sin(deltaAngle);
+        const rotatedX = newX * cosDA - newY * sinDA;
+        const rotatedY = newX * sinDA + newY * cosDA;
+
+        newX = rotatedX;
+        newY = rotatedY;
+
+        // PARTICLE TRAIL UPDATE
+        // Shift trail positions (oldest trail point gets discarded)
+        for (let t = TRAIL_LENGTH - 1; t > 0; t--) {
+          const trailIdx = i * TRAIL_LENGTH + t;
+          const prevIdx = i * TRAIL_LENGTH + (t - 1);
+
+          trailPositions.current[trailIdx * 3] = trailPositions.current[prevIdx * 3];
+          trailPositions.current[trailIdx * 3 + 1] = trailPositions.current[prevIdx * 3 + 1];
+          trailPositions.current[trailIdx * 3 + 2] = trailPositions.current[prevIdx * 3 + 2];
+          trailAges.current[trailIdx] = (t / TRAIL_LENGTH);
+        }
+
+        // Set newest trail position to current particle position
+        const trailIdx = i * TRAIL_LENGTH;
+        trailPositions.current[trailIdx * 3] = positions[i3];
+        trailPositions.current[trailIdx * 3 + 1] = positions[i3 + 1];
+        trailPositions.current[trailIdx * 3 + 2] = positions[i3 + 2];
+        trailAges.current[trailIdx] = 0;
 
         // BOUNDARY CONSTRAINTS - Keep particles within accretion disk
         if (newRadius < INNER_RADIUS || newRadius > OUTER_RADIUS || distToCenter < EVENT_HORIZON) {
@@ -1133,6 +1250,21 @@ function BlackHole({
       }
 
       posAttr.needsUpdate = true;
+    }
+
+    // PARTICLE TRAILS - Update shader and geometry
+    if (particleTrailsRef.current) {
+      const material = particleTrailsRef.current.material as THREE.ShaderMaterial;
+      if (material.uniforms) {
+        material.uniforms.time.value = time;
+      }
+
+      // Update trail geometry positions (already updated in main disk loop)
+      const posAttr = particleTrailsRef.current.geometry.attributes.position;
+      posAttr.needsUpdate = true;
+
+      const ageAttr = particleTrailsRef.current.geometry.attributes.age as THREE.BufferAttribute;
+      ageAttr.needsUpdate = true;
     }
   });
 
@@ -1533,6 +1665,75 @@ function BlackHole({
     blending: THREE.AdditiveBlending
   }), [enableDopplerShift, enableGravitationalLensing]);
 
+  // Particle Trail Shader - Custom shader for motion trails
+  const particleTrailShader = useMemo(() => ({
+    uniforms: {
+      time: { value: 0 },
+      pixelRatio: { value: typeof window !== 'undefined' ? window.devicePixelRatio : 1 }
+    },
+    vertexShader: `
+      uniform float time;
+      uniform float pixelRatio;
+      attribute vec3 color;
+      attribute float age;
+
+      varying vec3 vColor;
+      varying float vAge;
+      varying float vDistance;
+
+      void main() {
+        vColor = color;
+        vAge = age;
+
+        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+        vDistance = -mvPosition.z;
+
+        // Trails fade and shrink with age
+        float size = (6.0 / vDistance) * pixelRatio * (1.0 - age * 0.7);
+
+        gl_PointSize = size;
+        gl_Position = projectionMatrix * mvPosition;
+      }
+    `,
+    fragmentShader: `
+      uniform float time;
+      varying vec3 vColor;
+      varying float vAge;
+      varying float vDistance;
+
+      void main() {
+        // Circular shape
+        vec2 center = gl_PointCoord - vec2(0.5);
+        float dist = length(center);
+        if (dist > 0.5) discard;
+
+        // Soft glow with age-based fading
+        float alpha = 1.0 - smoothstep(0.15, 0.5, dist);
+        alpha = pow(alpha, 1.5);
+
+        // Fade out older trail points
+        alpha *= (1.0 - vAge);
+
+        // Add shimmer effect along trail
+        float shimmer = sin(time * 4.0 + vAge * 20.0) * 0.2 + 0.8;
+        alpha *= shimmer;
+
+        // Color intensity decreases with age
+        vec3 finalColor = vColor * (0.5 + (1.0 - vAge) * 0.5);
+
+        // Add subtle glow
+        float glow = 1.0 - dist * 2.0;
+        glow = pow(max(glow, 0.0), 2.0);
+        finalColor += vColor * glow * 0.3 * (1.0 - vAge);
+
+        gl_FragColor = vec4(finalColor, alpha * 0.5);
+      }
+    `,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending
+  }), []);
+
   // Geometries for all disk components
   const diskGeometry = useMemo(() => {
     const geom = new THREE.BufferGeometry();
@@ -1568,6 +1769,27 @@ function BlackHole({
     geom.setAttribute('color', new THREE.BufferAttribute(magneticLineColors, 3));
     return geom;
   }, [magneticLinePositions, magneticLineColors]);
+
+  // Particle trail geometry - uses trail positions and ages
+  const trailGeometry = useMemo(() => {
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.BufferAttribute(trailPositions.current, 3));
+    geom.setAttribute('age', new THREE.BufferAttribute(trailAges.current, 1));
+
+    // Use disk colors for trails (will be updated each frame)
+    const trailColors = new Float32Array(trailPositions.current.length);
+    for (let i = 0; i < diskColors.length / 3; i++) {
+      for (let t = 0; t < TRAIL_LENGTH; t++) {
+        const trailIdx = i * TRAIL_LENGTH + t;
+        trailColors[trailIdx * 3] = diskColors[i * 3];
+        trailColors[trailIdx * 3 + 1] = diskColors[i * 3 + 1];
+        trailColors[trailIdx * 3 + 2] = diskColors[i * 3 + 2];
+      }
+    }
+    geom.setAttribute('color', new THREE.BufferAttribute(trailColors, 3));
+
+    return geom;
+  }, [diskColors]);
 
   return (
     <group>
@@ -1685,6 +1907,11 @@ function BlackHole({
           depthWrite={false}
           blending={THREE.AdditiveBlending}
         />
+      </points>
+
+      {/* PARTICLE TRAILS - Motion history with custom shader */}
+      <points ref={particleTrailsRef} geometry={trailGeometry}>
+        <shaderMaterial {...particleTrailShader} />
       </points>
 
       {/* Enhanced Multi-Layer Glow Rings */}
