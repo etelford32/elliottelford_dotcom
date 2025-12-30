@@ -41,6 +41,14 @@ export const NAVIGATION_LINKS = [
   { name: "Contact", href: "/contact", description: "Get in touch" },
 ];
 
+// Special Navigation - Subscribe CTA
+export const SUBSCRIBE_LINK = {
+  name: "Subscribe",
+  href: "/subscribe",
+  description: "Get updates on new content",
+  icon: "✨"
+};
+
 // External Navigation (Cross-site Links)
 export const EXTERNAL_NAVIGATION_LINKS = [
   {

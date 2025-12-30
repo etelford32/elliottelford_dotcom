@@ -12,12 +12,12 @@ export const Hero: React.FC = () => {
       <ThreeJsHero />
 
       {/* Content */}
-      <div className="container mx-auto px-6 lg:px-8 py-40 lg:py-48 relative z-10 pl-[10px]">
+      <div className="container mx-auto px-6 lg:px-8 py-40 lg:py-48 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="text-center max-w-6xl mx-auto space-y-20 lg:space-y-24"
+          className="text-center max-w-6xl mx-auto space-y-20 lg:space-y-24 flex flex-col items-center justify-center"
         >
           {/* Greeting */}
           <motion.div
@@ -86,14 +86,14 @@ export const Hero: React.FC = () => {
             transition={{ delay: 1.2, duration: 0.8 }}
             className="flex flex-col sm:flex-row gap-6 justify-center items-center pt-8"
           >
-            <Button href="/simulations" variant="primary" size="lg">
+            <Button href="/subscribe" variant="primary" size="lg">
+              ✨ Subscribe for Updates
+            </Button>
+            <Button href="/simulations" variant="secondary" size="lg">
               🌌 Explore Simulations
             </Button>
-            <Button href="/game" variant="secondary" size="lg">
+            <Button href="/game" variant="ghost" size="lg">
               🎮 View Game
-            </Button>
-            <Button href="/contact" variant="ghost" size="lg">
-              💬 Get In Touch
             </Button>
           </motion.div>
 

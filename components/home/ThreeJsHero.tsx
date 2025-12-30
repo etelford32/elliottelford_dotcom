@@ -16,7 +16,7 @@ function StarField({ theme: _theme = 'dark' }: { theme?: 'light' | 'dark' }) {
     return new THREE.ShaderMaterial({
       uniforms: {
         time: { value: 0 },
-        pixelRatio: { value: window.devicePixelRatio }
+        pixelRatio: { value: typeof window !== 'undefined' ? window.devicePixelRatio : 1 }
       },
       vertexShader: `
         uniform float time;
@@ -1459,6 +1459,7 @@ function CameraController({
 }
 
 export const ThreeJsHero: React.FC = () => {
+  const [mounted, setMounted] = useState(false);
   const [showControls, setShowControls] = useState(false); // Start minimized
   const [autoRotate, setAutoRotate] = useState(false);
   const [cameraPreset, setCameraPreset] = useState<{
@@ -1487,6 +1488,11 @@ export const ThreeJsHero: React.FC = () => {
   };
 
   const [theme, setTheme] = useState<'light' | 'dark'>(getInitialTheme);
+
+  // Set mounted state to prevent hydration mismatch
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Apply theme to document root
   React.useEffect(() => {
@@ -1526,6 +1532,13 @@ export const ThreeJsHero: React.FC = () => {
     // Clear preset after animation completes
     setTimeout(() => setCameraPreset(null), 2000);
   };
+
+  // Prevent hydration mismatch by only rendering on client
+  if (!mounted) {
+    return (
+      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-background to-primary/10" />
+    );
+  }
 
   return (
     <>

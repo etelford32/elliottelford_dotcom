@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { NAVIGATION_LINKS, EXTERNAL_NAVIGATION_LINKS } from '@/lib/constants';
+import { NAVIGATION_LINKS, SUBSCRIBE_LINK, EXTERNAL_NAVIGATION_LINKS } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { MobileNav } from './MobileNav';
 import { SpaceshipLogo } from '@/components/ui/SpaceshipLogo';
@@ -84,6 +84,21 @@ export const Header: React.FC = () => {
                   </li>
                 );
               })}
+
+              {/* Subscribe CTA - Special Styling */}
+              <li>
+                <Link
+                  href={SUBSCRIBE_LINK.href}
+                  className="relative px-6 py-3 text-base font-bold transition-all duration-300 rounded-lg group overflow-hidden bg-gradient-to-r from-accent/30 to-secondary/30 border-2 border-accent/60 hover:border-accent text-foreground hover:text-white hover:scale-105"
+                >
+                  {/* Animated glow */}
+                  <span className="absolute inset-0 bg-gradient-to-r from-accent/40 via-secondary/40 to-accent/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  <span className="relative flex items-center gap-2">
+                    <span>{SUBSCRIBE_LINK.icon}</span>
+                    <span>{SUBSCRIBE_LINK.name}</span>
+                  </span>
+                </Link>
+              </li>
 
               {/* External Links - Special Styling */}
               {EXTERNAL_NAVIGATION_LINKS.map((link) => (
