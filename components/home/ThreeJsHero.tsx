@@ -1359,6 +1359,16 @@ export const ThreeJsHero: React.FC = () => {
 
   const [theme, setTheme] = useState<'light' | 'dark'>(getInitialTheme);
 
+  // Apply theme to document root
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      document.documentElement.setAttribute('data-theme', theme);
+      // Update body background color
+      document.body.style.backgroundColor = theme === 'light' ? '#ffffff' : '#000000';
+      document.body.style.color = theme === 'light' ? '#000000' : '#e0e7ff';
+    }
+  }, [theme]);
+
   // Update theme based on time
   React.useEffect(() => {
     const checkTime = () => {
@@ -1395,7 +1405,7 @@ export const ThreeJsHero: React.FC = () => {
         <Canvas
           camera={{ position: [3, 2, 6], fov: 70 }}
           style={{
-            background: theme === 'dark' ? 'transparent' : 'radial-gradient(ellipse at center, #e0e7ff 0%, #c7d2fe 100%)',
+            background: theme === 'dark' ? 'transparent' : '#ffffff',
             cursor: 'grab',
             pointerEvents: 'auto'
           }}
@@ -1641,7 +1651,20 @@ export const ThreeJsHero: React.FC = () => {
         </div>
       )}
 
-        {/* Minimized Toggle Button */}
+        {/* Theme Toggle - Top position */}
+        <button
+          onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            setTheme(theme === 'light' ? 'dark' : 'light');
+          }}
+          className="absolute top-6 left-6 bg-primary/95 backdrop-blur-md border border-accent/40 rounded-lg px-4 py-2.5 font-mono text-xs text-foreground hover:bg-accent/30 hover:scale-105 transition-all shadow-lg pointer-events-auto flex items-center gap-2 font-semibold cursor-pointer touch-manipulation"
+          title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+        >
+          {theme === 'light' ? '🌙 Dark' : '☀️ Light'}
+        </button>
+
+        {/* Camera Toggle - Below Theme Button */}
         {!showControls && (
           <button
             onClick={() => setShowControls(true)}
@@ -1649,26 +1672,13 @@ export const ThreeJsHero: React.FC = () => {
               e.preventDefault();
               setShowControls(true);
             }}
-            className="absolute top-6 left-6 bg-primary/95 backdrop-blur-md border border-accent/40 rounded-lg px-4 py-2.5 font-mono text-sm text-accent hover:bg-accent/30 hover:scale-105 transition-all shadow-lg pointer-events-auto flex items-center gap-2 font-semibold animate-in fade-in slide-in-from-left-5 duration-300 cursor-pointer touch-manipulation"
+            className="absolute top-20 left-6 bg-primary/95 backdrop-blur-md border border-accent/40 rounded-lg px-4 py-2.5 font-mono text-sm text-accent hover:bg-accent/30 hover:scale-105 transition-all shadow-lg pointer-events-auto flex items-center gap-2 font-semibold animate-in fade-in slide-in-from-left-5 duration-300 cursor-pointer touch-manipulation"
             title="Open camera controls"
           >
             <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
             <span>CAMERA</span>
           </button>
         )}
-
-        {/* Theme Toggle - Below Camera Button */}
-        <button
-          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          onTouchEnd={(e) => {
-            e.preventDefault();
-            setTheme(theme === 'dark' ? 'light' : 'dark');
-          }}
-          className="absolute top-20 left-6 bg-primary/95 backdrop-blur-md border border-accent/40 rounded-lg px-4 py-2.5 font-mono text-xs text-foreground hover:bg-accent/30 hover:scale-105 transition-all shadow-lg pointer-events-auto flex items-center gap-2 font-semibold cursor-pointer touch-manipulation"
-          title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-        >
-          {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
-        </button>
 
         {/* Helper text for first-time users - only shows when controls are minimized */}
         {!showControls && (
