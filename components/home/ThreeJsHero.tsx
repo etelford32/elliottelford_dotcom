@@ -1448,13 +1448,13 @@ function BlackHole({
           photonColor = vec3(0.4, 0.35, 0.15);   // Dark gold ring
           atmosphereColor = vec3(0.9, 0.8, 0.5); // Golden atmosphere
         } else {
-          // Dark mode: Vibrant cosmic colors
-          lensingColor1 = vec3(0.6, 0.3, 1.0);   // Vivid purple
-          lensingColor2 = vec3(0.2, 0.7, 1.2);   // Electric cyan
-          lensingColor3 = vec3(1.0, 0.4, 0.8);   // Bright magenta
+          // Dark mode: ULTRAVIOLET SPECTRUM - Extreme high-energy colors
+          lensingColor1 = vec3(1.4, 0.3, 2.2);   // Deep UV violet
+          lensingColor2 = vec3(0.5, 1.2, 2.8);   // UV electric blue
+          lensingColor3 = vec3(1.8, 0.5, 2.4);   // UV magenta
           coreColor = vec3(0.002, 0.001, 0.005); // Deep void black
-          photonColor = vec3(1.2, 1.0, 0.9);     // Brilliant white ring
-          atmosphereColor = vec3(0.4, 0.2, 0.8); // Purple atmosphere
+          photonColor = vec3(2.2, 2.0, 2.8);     // White-hot UV
+          atmosphereColor = vec3(1.0, 0.4, 2.0); // UV violet atmosphere
         }
 
         // Complex color mixing with multiple layers
@@ -1504,22 +1504,50 @@ function BlackHole({
         float quantumNoise = noise(noisePos) * fresnel2 * 0.03;
         finalColor += (isLightMode ? vec3(0.6, 0.5, 0.3) : vec3(0.8, 0.7, 1.0)) * quantumNoise;
 
-        // Hawking radiation with enhanced glow
+        // HAWKING RADIATION - High-energy quantum emission
         float hawkingGlow = pow(fresnel4, 1.5) * 0.25 * (sin(time * 3.5) * 0.4 + 0.6);
         if (isLightMode) {
           finalColor += vec3(0.7, 0.6, 0.4) * hawkingGlow;
         } else {
-          finalColor += vec3(0.9, 1.0, 1.2) * hawkingGlow;
+          // UV Hawking radiation
+          vec3 hawkingUV = vec3(1.6, 1.4, 2.5); // White-hot UV
+          finalColor += hawkingUV * hawkingGlow * 1.2;
         }
 
-        // Edge brightening for depth perception
+        // UV ENERGY CORONA - Brilliant high-frequency emission
+        if (!isLightMode) {
+          float uvCorona = pow(fresnel3, 2.5) * (sin(time * 7.0 + angleShift * 20.0) * 0.3 + 0.7);
+          vec3 uvCoronaColor = mix(
+            vec3(1.8, 0.6, 2.5),  // UV magenta
+            vec3(0.6, 1.5, 2.8),  // UV cyan
+            sin(time * 4.0) * 0.5 + 0.5
+          );
+          finalColor += uvCoronaColor * uvCorona * 0.4;
+        }
+
+        // Edge brightening with UV enhancement
         float edgeBrightness = pow(fresnel2, 1.2) * 0.5;
         finalColor += edgeColor * edgeBrightness;
 
-        // Add subtle color aberration (like a lens)
-        float aberration = fresnel3 * 0.15;
-        finalColor.r += aberration * (isLightMode ? 0.3 : 0.5);
-        finalColor.b += aberration * (isLightMode ? 0.2 : 0.6);
+        // CHROMATIC ABERRATION - UV spectrum dispersion
+        float aberration = fresnel3 * (isLightMode ? 0.15 : 0.25);
+        if (!isLightMode) {
+          // Enhanced UV chromatic aberration
+          finalColor.r += aberration * 0.8;
+          finalColor.g += aberration * 0.4;
+          finalColor.b += aberration * 1.2; // Strong blue shift
+        } else {
+          finalColor.r += aberration * 0.3;
+          finalColor.b += aberration * 0.2;
+        }
+
+        // X-RAY FLASH effect (high-energy bursts)
+        if (!isLightMode) {
+          float xrayFlash = sin(time * 20.0 + angleShift * 15.0) * 0.5 + 0.5;
+          xrayFlash = pow(xrayFlash, 10.0); // Sharp pulses
+          vec3 xrayColor = vec3(2.5, 2.5, 3.0); // Ultra-high energy white
+          finalColor += xrayColor * xrayFlash * fresnel4 * 0.3;
+        }
 
         // Final HDR-ready output with overbright values
         gl_FragColor = vec4(finalColor, 1.0);
@@ -1658,17 +1686,37 @@ function BlackHole({
         float temperature = 1.0 / (vDistance + 0.3); // Inverse distance temperature
         temperature = pow(temperature, 1.5);
 
-        // Temperature color shift (black body radiation)
+        // ULTRAVIOLET TEMPERATURE SPECTRUM - Extreme energy visualization
+        // Black body radiation extended into UV spectrum
         vec3 temperatureColor = vec3(1.0);
-        if (temperature > 0.8) {
-          // Extremely hot - blue-white
-          temperatureColor = vec3(0.8, 0.9, 1.2) * (1.0 + temperature * 0.5);
-        } else if (temperature > 0.5) {
-          // Very hot - white-yellow
-          temperatureColor = vec3(1.2, 1.1, 0.9) * (1.0 + temperature * 0.3);
+
+        // UV spectrum colors for extreme energy
+        vec3 uvUltraviolet = vec3(1.4, 0.6, 2.5);   // Deep UV
+        vec3 uvViolet = vec3(1.6, 0.4, 2.2);        // Violet
+        vec3 uvWhiteHot = vec3(2.0, 1.8, 2.5);      // White-hot UV
+        vec3 uvElectricBlue = vec3(0.8, 1.2, 2.8);  // Electric blue
+        vec3 uvCyan = vec3(0.6, 2.2, 2.5);          // UV cyan
+
+        if (temperature > 0.9) {
+          // ULTRA-extreme: White-hot UV emission
+          temperatureColor = uvWhiteHot * (1.0 + temperature * 1.2);
+        } else if (temperature > 0.75) {
+          // Extreme: UV electric blue
+          float t = (temperature - 0.75) / 0.15;
+          temperatureColor = mix(uvElectricBlue, uvWhiteHot, t) * (1.0 + temperature * 0.8);
+        } else if (temperature > 0.6) {
+          // Very hot: UV cyan
+          float t = (temperature - 0.6) / 0.15;
+          temperatureColor = mix(uvCyan, uvElectricBlue, t) * (1.0 + temperature * 0.6);
+        } else if (temperature > 0.4) {
+          // Hot: Deep violet
+          float t = (temperature - 0.4) / 0.2;
+          temperatureColor = mix(uvViolet, uvCyan, t) * (1.0 + temperature * 0.4);
         } else {
-          // Hot - orange-red
-          temperatureColor = vec3(1.3, 0.8, 0.5) * (1.0 + temperature * 0.2);
+          // Warm: Ultraviolet to orange transition
+          float t = temperature / 0.4;
+          vec3 warmOrange = vec3(1.3, 0.8, 0.5);
+          temperatureColor = mix(warmOrange, uvUltraviolet, t) * (1.0 + temperature * 0.3);
         }
 
         // PHOTON SPHERE LIGHTING - Brightest ring at 1.5 * Schwarzschild radius
@@ -1727,14 +1775,50 @@ function BlackHole({
         // Apply overall brightness
         finalColor *= brightness;
 
-        // Add intense core bloom
-        finalColor += vec3(1.2, 1.1, 1.0) * coreGlow * 0.8;
+        // INTENSE UV CORE BLOOM - Massive energy emission
+        vec3 uvCoreGlow = mix(
+          vec3(2.0, 1.8, 2.5),  // White-hot UV
+          vec3(0.8, 1.2, 2.8),  // Electric blue
+          coreGlow * 0.5
+        );
+        finalColor += uvCoreGlow * coreGlow * 1.2;
 
-        // Pulsing emission (simulates turbulent energy release)
-        float pulse = sin(time * 2.0 + vDistance * 3.0) * 0.5 + 0.5;
-        finalColor += finalColor * pulse * 0.15;
+        // HIGH-ENERGY PULSE EFFECTS - Multiple frequency components
+        float energyPulse1 = sin(time * 3.0 + vDistance * 5.0) * 0.5 + 0.5;
+        float energyPulse2 = sin(time * 7.0 - vDistance * 8.0) * 0.5 + 0.5;
+        float energyPulse3 = sin(time * 11.0 + vDistance * 12.0) * 0.5 + 0.5;
 
-        // High dynamic range - allow overbright values for bloom
+        // Combine pulses for complex energy pattern
+        float combinedPulse = (energyPulse1 + energyPulse2 * 0.5 + energyPulse3 * 0.3) / 1.8;
+
+        // UV pulse emission
+        vec3 uvPulseColor = mix(
+          vec3(1.6, 0.4, 2.2),  // Violet
+          vec3(0.6, 2.2, 2.5),  // UV cyan
+          combinedPulse
+        );
+        finalColor += uvPulseColor * combinedPulse * 0.25 * temperature;
+
+        // GAMMA RAY BURST effect (innermost regions)
+        if (vDistance < 1.0) {
+          float gammaIntensity = (1.0 - vDistance) * 2.0;
+          vec3 gammaColor = vec3(2.5, 2.3, 3.0); // Ultra-high energy white
+          float gammaBurst = sin(time * 15.0) * 0.5 + 0.5;
+          finalColor += gammaColor * gammaIntensity * gammaBurst * 0.4;
+        }
+
+        // CHERENKOV RADIATION effect (superluminal particles)
+        float cherenkovAngle = atan(vPosition.y, vPosition.x);
+        float cherenkovPattern = sin(cherenkovAngle * 8.0 - time * 10.0) * 0.5 + 0.5;
+        vec3 cherenkovBlue = vec3(0.3, 0.8, 3.0);
+        finalColor += cherenkovBlue * cherenkovPattern * 0.15 * temperature;
+
+        // Energy corona - brilliant halo around hottest particles
+        float corona = smoothstep(0.3, 0.0, dist);
+        vec3 coronaColor = vec3(2.2, 2.0, 2.8); // Brilliant white-violet
+        finalColor += coronaColor * corona * temperature * 0.6;
+
+        // High dynamic range - allow massive overbright values for extreme energy
         gl_FragColor = vec4(finalColor, alpha * 0.9);
       }
     `,
@@ -1792,19 +1876,58 @@ function BlackHole({
         // Fade out older trail points
         alpha *= (1.0 - vAge);
 
-        // Add shimmer effect along trail
-        float shimmer = sin(time * 4.0 + vAge * 20.0) * 0.2 + 0.8;
-        alpha *= shimmer;
+        // ULTRAVIOLET SPECTRUM shimmer - high frequency oscillations
+        float uvShimmer = sin(time * 8.0 + vAge * 40.0) * 0.3 + 0.7;
+        float uvPulse = sin(time * 12.0 - vAge * 30.0) * 0.2 + 0.8;
+        alpha *= uvShimmer * uvPulse;
 
-        // Color intensity decreases with age
-        vec3 finalColor = vColor * (0.5 + (1.0 - vAge) * 0.5);
+        // ULTRAVIOLET COLOR SHIFT - Top of frequency spectrum
+        // Younger trails = white-hot, older = deep violet
+        vec3 uvWhite = vec3(1.5, 1.4, 2.0);      // Brilliant white with UV tint
+        vec3 uvBlue = vec3(0.4, 0.7, 2.5);       // Electric blue
+        vec3 uvViolet = vec3(1.2, 0.3, 2.0);     // Deep violet
+        vec3 uvMagenta = vec3(1.8, 0.4, 1.8);    // UV magenta
 
-        // Add subtle glow
-        float glow = 1.0 - dist * 2.0;
-        glow = pow(max(glow, 0.0), 2.0);
-        finalColor += vColor * glow * 0.3 * (1.0 - vAge);
+        // Energy-based color gradient
+        float energy = 1.0 - vAge;
+        vec3 uvColor;
 
-        gl_FragColor = vec4(finalColor, alpha * 0.5);
+        if (energy > 0.75) {
+          // Ultra-high energy: White-hot
+          uvColor = mix(uvWhite, uvBlue, (energy - 0.75) * 4.0);
+        } else if (energy > 0.5) {
+          // High energy: Electric blue
+          uvColor = mix(uvBlue, uvMagenta, (energy - 0.5) * 4.0);
+        } else if (energy > 0.25) {
+          // Medium energy: UV magenta
+          uvColor = mix(uvMagenta, uvViolet, (energy - 0.25) * 4.0);
+        } else {
+          // Lower energy: Deep violet
+          uvColor = mix(uvViolet, vColor * 0.8, energy * 4.0);
+        }
+
+        // Combine base color with UV spectrum
+        vec3 finalColor = vColor * 0.3 + uvColor * 0.7;
+        finalColor *= (0.5 + energy * 0.5);
+
+        // INTENSE CORE GLOW - UV radiation from center
+        float coreGlow = 1.0 - dist * 2.0;
+        coreGlow = pow(max(coreGlow, 0.0), 3.0);
+
+        // Add brilliant UV core
+        finalColor += uvWhite * coreGlow * 0.8 * energy;
+        finalColor += uvBlue * coreGlow * 0.5 * energy;
+
+        // Energy pulse rings
+        float rings = sin(dist * 20.0 - time * 6.0) * 0.5 + 0.5;
+        finalColor += uvMagenta * rings * 0.3 * energy;
+
+        // Chromatic aberration effect (UV dispersion)
+        float chromaticShift = dist * 0.1;
+        finalColor.r += chromaticShift * energy;
+        finalColor.b += chromaticShift * energy * 1.5;
+
+        gl_FragColor = vec4(finalColor, alpha * 0.6);
       }
     `,
     transparent: true,
