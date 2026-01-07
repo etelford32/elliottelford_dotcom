@@ -1,6 +1,5 @@
 import { StructuredData } from "@/components/seo/SEOHead";
 import { CTABanner } from "@/components/seo/InternalCrossLinks";
-import { SIMULATION_CATEGORIES } from "@/lib/constants";
 
 export const metadata = {
   title: "Interactive Simulations | Elliot Telford",
@@ -100,7 +99,7 @@ export default function SimulationsPage() {
       {/* Main Content */}
       <div className="relative space-y-56 lg:space-y-72 pb-32">
         {/* Simulation Categories */}
-        {simulationShowcases.map((showcase, index) => (
+        {simulationShowcases.map((showcase) => (
           <section key={showcase.category} className="relative py-20">
             <div className="container mx-auto px-6 lg:px-8">
               <div className={`
@@ -195,7 +194,7 @@ export default function SimulationsPage() {
 
                 <p>
                   All simulations on this site prioritize <strong className="text-accent">scientific accuracy</strong> while
-                  maintaining real-time performance. Whether it's calculating gravitational N-body interactions,
+                  maintaining real-time performance. Whether it&apos;s calculating gravitational N-body interactions,
                   solving differential equations for quantum wave functions, or modeling evolutionary fitness landscapes,
                   the math and physics are grounded in established scientific principles.
                 </p>

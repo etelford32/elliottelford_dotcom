@@ -155,7 +155,7 @@ export default function BlogPage() {
 
                 <p>
                   Topics range from deep dives into orbital mechanics algorithms, to WebGL shader optimization,
-                  to AI system architecture for strategy games. Whether you're building your own simulations,
+                  to AI system architecture for strategy games. Whether you&apos;re building your own simulations,
                   learning game development, or just curious about how things work, these articles
                   provide code examples, mathematical derivations, and real-world performance insights.
                 </p>
