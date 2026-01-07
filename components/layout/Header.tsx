@@ -7,11 +7,14 @@ import { NAVIGATION_LINKS, SUBSCRIBE_LINK, EXTERNAL_NAVIGATION_LINKS } from '@/l
 import { cn } from '@/lib/utils';
 import { MobileNav } from './MobileNav';
 import { SpaceshipLogo } from '@/components/ui/SpaceshipLogo';
+import { useAuth } from '@/lib/auth';
 
 export const Header: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const pathname = usePathname();
+  const { user, signOut } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -121,6 +124,74 @@ export const Header: React.FC = () => {
                   </a>
                 </li>
               ))}
+
+              {/* Auth Buttons / User Menu */}
+              {!user ? (
+                <>
+                  <li>
+                    <Link
+                      href="/login"
+                      className="px-6 py-3 text-base font-medium text-foreground/80 hover:text-accent transition-colors"
+                    >
+                      Sign In
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/signup"
+                      className="px-6 py-3 text-base font-bold bg-gradient-to-r from-accent/20 to-secondary/20 border border-accent/40 hover:border-accent text-accent rounded-lg transition-all duration-300 hover:scale-105"
+                    >
+                      Sign Up
+                    </Link>
+                  </li>
+                </>
+              ) : (
+                <li className="relative">
+                  <button
+                    onClick={() => setShowUserMenu(!showUserMenu)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-accent/30 bg-accent/10 hover:bg-accent/20 transition-colors"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-accent to-secondary flex items-center justify-center text-black font-bold">
+                      {user.name?.[0]?.toUpperCase() || user.email[0].toUpperCase()}
+                    </div>
+                    <span className="text-foreground font-medium">{user.name || user.email.split('@')[0]}</span>
+                    <svg className={`w-4 h-4 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  {/* User Dropdown Menu */}
+                  {showUserMenu && (
+                    <div className="absolute right-0 mt-2 w-56 rounded-lg border border-foreground/10 bg-card/95 backdrop-blur-sm shadow-2xl overflow-hidden z-50">
+                      <div className="p-4 border-b border-foreground/10">
+                        <p className="text-sm text-foreground/60">Signed in as</p>
+                        <p className="text-foreground font-semibold truncate">{user.email}</p>
+                        {user.subscription_tier && (
+                          <span className="inline-block mt-2 px-3 py-1 text-xs font-bold bg-accent/20 text-accent rounded-full border border-accent/30">
+                            {user.subscription_tier.toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                      <Link
+                        href="/subscribe"
+                        className="block px-4 py-3 text-foreground/80 hover:bg-accent/10 hover:text-accent transition-colors"
+                        onClick={() => setShowUserMenu(false)}
+                      >
+                        Manage Subscription
+                      </Link>
+                      <button
+                        onClick={() => {
+                          signOut();
+                          setShowUserMenu(false);
+                        }}
+                        className="w-full text-left px-4 py-3 text-red-400 hover:bg-red-500/10 transition-colors"
+                      >
+                        Sign Out
+                      </button>
+                    </div>
+                  )}
+                </li>
+              )}
             </ul>
 
             {/* Mobile Menu Button */}

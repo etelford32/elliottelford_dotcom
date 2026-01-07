@@ -7,6 +7,7 @@ import { DevBanner } from "@/components/layout/DevBanner";
 import { ScrollProgress } from "@/components/layout/ScrollProgress";
 import { generateSEOMetadata } from "@/components/seo/SEOHead";
 import { SITE_NAME } from "@/lib/constants";
+import { AuthProvider } from "@/lib/auth";
 
 // Optimized font loading with Next.js
 const inter = Inter({
@@ -59,13 +60,15 @@ export default function RootLayout({
   return (
     <html lang="en" className={`scroll-smooth ${inter.variable} ${orbitron.variable} ${rajdhani.variable} ${spaceGrotesk.variable}`}>
       <body className={`antialiased ${inter.className}`}>
-        <ScrollProgress />
-        <DevBanner />
-        <Header />
-        <main className="min-h-screen">
-          {children}
-        </main>
-        <Footer />
+        <AuthProvider>
+          <ScrollProgress />
+          <DevBanner />
+          <Header />
+          <main className="min-h-screen">
+            {children}
+          </main>
+          <Footer />
+        </AuthProvider>
       </body>
     </html>
   );
