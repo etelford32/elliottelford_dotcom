@@ -4,6 +4,7 @@ import React, { useRef, useMemo, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Points, PointMaterial, Line, OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
+import type { OrbitControls as OrbitControlsType } from 'three-stdlib';
 
 function StarField() {
   const ref = useRef<THREE.Points>(null);
@@ -990,27 +991,29 @@ function BlackHole({
       star.radius = Math.sqrt(starPositions[i3] * starPositions[i3] + starPositions[i3 + 1] * starPositions[i3 + 1]);
 
       // UPDATE STAR TRAILS
-      // Shift trail positions (oldest gets discarded)
-      for (let t = STAR_TRAIL_LENGTH - 1; t > 0; t--) {
-        const trailIdx = i * STAR_TRAIL_LENGTH + t;
-        const prevIdx = i * STAR_TRAIL_LENGTH + (t - 1);
+      if (starTrailPositions.current && starTrailAges.current) {
+        // Shift trail positions (oldest gets discarded)
+        for (let t = STAR_TRAIL_LENGTH - 1; t > 0; t--) {
+          const trailIdx = i * STAR_TRAIL_LENGTH + t;
+          const prevIdx = i * STAR_TRAIL_LENGTH + (t - 1);
 
-        starTrailPositions.current[trailIdx * 3] = starTrailPositions.current[prevIdx * 3];
-        starTrailPositions.current[trailIdx * 3 + 1] = starTrailPositions.current[prevIdx * 3 + 1];
-        starTrailPositions.current[trailIdx * 3 + 2] = starTrailPositions.current[prevIdx * 3 + 2];
-        starTrailAges.current[trailIdx] = t / STAR_TRAIL_LENGTH;
+          starTrailPositions.current[trailIdx * 3] = starTrailPositions.current[prevIdx * 3];
+          starTrailPositions.current[trailIdx * 3 + 1] = starTrailPositions.current[prevIdx * 3 + 1];
+          starTrailPositions.current[trailIdx * 3 + 2] = starTrailPositions.current[prevIdx * 3 + 2];
+          starTrailAges.current[trailIdx] = t / STAR_TRAIL_LENGTH;
+        }
+
+        // Set newest trail position to current star position
+        const trailIdx = i * STAR_TRAIL_LENGTH;
+        starTrailPositions.current[trailIdx * 3] = starPositions[i3];
+        starTrailPositions.current[trailIdx * 3 + 1] = starPositions[i3 + 1];
+        starTrailPositions.current[trailIdx * 3 + 2] = starPositions[i3 + 2];
+        starTrailAges.current[trailIdx] = 0;
       }
-
-      // Set newest trail position to current star position
-      const trailIdx = i * STAR_TRAIL_LENGTH;
-      starTrailPositions.current[trailIdx * 3] = starPositions[i3];
-      starTrailPositions.current[trailIdx * 3 + 1] = starPositions[i3 + 1];
-      starTrailPositions.current[trailIdx * 3 + 2] = starPositions[i3 + 2];
-      starTrailAges.current[trailIdx] = 0;
     }
 
     // Main 3D volumetric accretion disk with complex physics
-    if (accretionDiskRef.current) {
+    if (accretionDiskRef.current && particleOrbitSource.current && particleOrbitTransition.current) {
       const posAttr = accretionDiskRef.current.geometry.attributes.position;
       const positions = posAttr.array as Float32Array;
       const vels = diskVelocities.current;
@@ -2348,9 +2351,9 @@ function BlackHole({
   // Star trail geometry - orbital paths of stars
   const starTrailGeometry = useMemo(() => {
     const geom = new THREE.BufferGeometry();
-    geom.setAttribute('position', new THREE.BufferAttribute(starTrailPositions.current, 3));
-    geom.setAttribute('age', new THREE.BufferAttribute(starTrailAges.current, 1));
-    geom.setAttribute('color', new THREE.BufferAttribute(starTrailColors.current, 3));
+    geom.setAttribute('position', new THREE.BufferAttribute(starTrailPositions.current!, 3));
+    geom.setAttribute('age', new THREE.BufferAttribute(starTrailAges.current!, 1));
+    geom.setAttribute('color', new THREE.BufferAttribute(starTrailColors.current!, 3));
     return geom;
   }, []);
 
@@ -2690,7 +2693,7 @@ function CameraController({
   cameraPreset: { position: [number, number, number]; target: [number, number, number] } | null;
   theme?: 'light' | 'dark';
 }) {
-  const controlsRef = useRef<{ target: THREE.Vector3; update: () => void } | null>(null);
+  const controlsRef = useRef<OrbitControlsType>(null!);
   const { camera } = useThree();
 
   // Apply camera preset with smooth transition
