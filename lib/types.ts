@@ -6,7 +6,7 @@ export interface Simulation {
   id: string;
   title: string;
   slug: string;
-  category: 'planetary-systems' | 'black-holes' | 'stellar-dynamics';
+  category: 'computational-astrophysics' | 'quantum-physics' | 'biological-evolution' | 'physics-games';
   description: string;
   scientificAccuracy: string;
   techStack: string[];
@@ -43,5 +43,5 @@ export interface Project {
   featured: boolean;
 }
 
-export type SimulationCategory = 'planetary-systems' | 'black-holes' | 'stellar-dynamics';
+export type SimulationCategory = 'computational-astrophysics' | 'quantum-physics' | 'biological-evolution' | 'physics-games';
 export type BlogCategory = 'space' | 'gamedev' | 'health' | 'opinion';

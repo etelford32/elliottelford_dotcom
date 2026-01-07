@@ -52,7 +52,7 @@ export const SUBSCRIBE_LINK = {
 // External Navigation (Cross-site Links)
 export const EXTERNAL_NAVIGATION_LINKS = [
   {
-    name: "Play the Game",
+    name: "Play Explore the Universe 2175!",
     href: "https://exploretheuniverse2175.com",
     description: "Visit the official Explore the Universe 2175 website",
     isExternal: true,
@@ -61,9 +61,10 @@ export const EXTERNAL_NAVIGATION_LINKS = [
 ];
 
 export const SIMULATION_CATEGORIES = [
-  { value: "planetary-systems", label: "Planetary Systems", color: "accent" },
-  { value: "black-holes", label: "Black Holes", color: "secondary" },
-  { value: "stellar-dynamics", label: "Stellar Dynamics", color: "primary" },
+  { value: "computational-astrophysics", label: "Computational Astrophysics", color: "accent" },
+  { value: "quantum-physics", label: "Quantum Physics", color: "secondary" },
+  { value: "biological-evolution", label: "Biological & Naturalistic Evolution", color: "primary" },
+  { value: "physics-games", label: "Physics-Based Games", color: "foreground" },
 ] as const;
 
 export const BLOG_CATEGORIES = [
