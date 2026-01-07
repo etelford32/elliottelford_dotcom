@@ -4,8 +4,9 @@ import React, { useRef, useMemo, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Points, PointMaterial, Line, OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
+import type { OrbitControls as OrbitControlsType } from 'three-stdlib';
 
-function StarField({ theme: _theme = 'dark' }: { theme?: 'light' | 'dark' }) {
+function StarField() {
   const ref = useRef<THREE.Points>(null);
   const glowRef = useRef<THREE.Points>(null);
   const { mouse } = useThree();
@@ -107,7 +108,7 @@ function StarField({ theme: _theme = 'dark' }: { theme?: 'light' | 'dark' }) {
   }, []);
 
   // Generate star positions with MUCH darker, more dramatic colors
-  const { positions, colors, glowPositions } = useMemo(() => {
+  const [{ positions, colors, glowPositions }] = useState(() => {
     const positions = new Float32Array(15000 * 3);
     const colors = new Float32Array(15000 * 3);
     const glowPositions = new Float32Array(400 * 3);
@@ -174,7 +175,7 @@ function StarField({ theme: _theme = 'dark' }: { theme?: 'light' | 'dark' }) {
     }
 
     return { positions, colors, glowPositions };
-  }, []);
+  });
 
   // Enhanced rotation with mouse parallax, shader updates, and black hole gravity
   useFrame((state) => {
@@ -730,7 +731,17 @@ function BlackHole({
   }, []);
 
   // Polar jets - relativistic particles shooting from poles
-  const { jetPositions, jetColors, jetData } = useMemo(() => {
+  const jetDataRef = useRef<{
+    jetPositions: Float32Array;
+    jetColors: Float32Array;
+    jetData: Array<{ height: number; angle: number; speed: number }>;
+  }>(null as unknown as {
+    jetPositions: Float32Array;
+    jetColors: Float32Array;
+    jetData: Array<{ height: number; angle: number; speed: number }>;
+  });
+
+  if (!jetDataRef.current) {
     const particleCount = 1500;
     const jetPositions = new Float32Array(particleCount * 3);
     const jetColors = new Float32Array(particleCount * 3);
@@ -762,14 +773,40 @@ function BlackHole({
       jetColors[i3 + 2] = 1.0;
     }
 
-    return { jetPositions, jetColors, jetData };
-  }, []);
+    jetDataRef.current = { jetPositions, jetColors, jetData };
+  }
+
+  const { jetPositions, jetColors, jetData } = jetDataRef.current;
 
   // ORBITING STARS - Gravitational attractors in outer disk for accretion evolution
   const NUM_STARS = 9;
   const STAR_TRAIL_LENGTH = 150; // Longer trails for stars
 
-  const { starPositions, starColors, starVelocities, starData } = useMemo(() => {
+  const starDataRef = useRef<{
+    starPositions: Float32Array;
+    starColors: Float32Array;
+    starVelocities: Float32Array;
+    starData: Array<{
+      radius: number;
+      angle: number;
+      orbitalSpeed: number;
+      mass: number;
+      phase: number;
+    }>;
+  }>(null as unknown as {
+    starPositions: Float32Array;
+    starColors: Float32Array;
+    starVelocities: Float32Array;
+    starData: Array<{
+      radius: number;
+      angle: number;
+      orbitalSpeed: number;
+      mass: number;
+      phase: number;
+    }>;
+  });
+
+  if (!starDataRef.current) {
     const starPositions = new Float32Array(NUM_STARS * 3);
     const starColors = new Float32Array(NUM_STARS * 3);
     const starVelocities = new Float32Array(NUM_STARS * 3);
@@ -777,8 +814,8 @@ function BlackHole({
       radius: number;
       angle: number;
       orbitalSpeed: number;
-      mass: number; // Gravitational strength
-      phase: number; // Orbital phase offset
+      mass: number;
+      phase: number;
     }> = [];
 
     for (let i = 0; i < NUM_STARS; i++) {
@@ -786,13 +823,13 @@ function BlackHole({
 
       // Distribute stars in outer disk (r: 2.0 to 3.2)
       const radius = 2.0 + (i / NUM_STARS) * 1.2;
-      const angle = (i / NUM_STARS) * Math.PI * 2 + Math.random() * 0.5; // Distributed around disk
-      const phase = Math.random() * Math.PI * 2; // Random initial phase
+      const angle = (i / NUM_STARS) * Math.PI * 2 + Math.random() * 0.5;
+      const phase = Math.random() * Math.PI * 2;
 
       // Initial position on circular orbit in disk plane
       starPositions[i3] = Math.cos(angle) * radius;
       starPositions[i3 + 1] = Math.sin(angle) * radius;
-      starPositions[i3 + 2] = (Math.random() - 0.5) * 0.15; // Slight vertical variance
+      starPositions[i3 + 2] = (Math.random() - 0.5) * 0.15;
 
       // Keplerian orbital speed v = sqrt(GM/r)
       const orbitalSpeed = Math.sqrt(1.0 / radius) * 0.15;
@@ -803,8 +840,7 @@ function BlackHole({
       starVelocities[i3 + 2] = 0;
 
       // Star mass (gravitational influence on particles)
-      // Larger stars = stronger gravity
-      const mass = 0.08 + Math.random() * 0.12; // 0.08 to 0.2
+      const mass = 0.08 + Math.random() * 0.12;
 
       starData.push({
         radius,
@@ -841,16 +877,22 @@ function BlackHole({
       console.log(`Star ${i}: pos=(${starPositions[i3].toFixed(2)}, ${starPositions[i3+1].toFixed(2)}, ${starPositions[i3+2].toFixed(2)}), color=(${starColors[i3].toFixed(2)}, ${starColors[i3+1].toFixed(2)}, ${starColors[i3+2].toFixed(2)})`);
     }
 
-    return { starPositions, starColors, starVelocities, starData };
-  }, []);
+    starDataRef.current = { starPositions, starColors, starVelocities, starData };
+  }
+
+  const { starPositions, starColors, starVelocities, starData } = starDataRef.current;
 
   // Star trail positions (each star has a trail showing its orbit)
-  const starTrailPositions = useRef<Float32Array>(new Float32Array(NUM_STARS * STAR_TRAIL_LENGTH * 3));
-  const starTrailAges = useRef<Float32Array>(new Float32Array(NUM_STARS * STAR_TRAIL_LENGTH));
-  const starTrailColors = useRef<Float32Array>(new Float32Array(NUM_STARS * STAR_TRAIL_LENGTH * 3));
+  const starTrailPositions = useRef<Float32Array | null>(null);
+  const starTrailAges = useRef<Float32Array | null>(null);
+  const starTrailColors = useRef<Float32Array | null>(null);
 
   // Initialize star trails
-  useMemo(() => {
+  if (!starTrailPositions.current) {
+    starTrailPositions.current = new Float32Array(NUM_STARS * STAR_TRAIL_LENGTH * 3);
+    starTrailAges.current = new Float32Array(NUM_STARS * STAR_TRAIL_LENGTH);
+    starTrailColors.current = new Float32Array(NUM_STARS * STAR_TRAIL_LENGTH * 3);
+
     for (let i = 0; i < NUM_STARS; i++) {
       const i3 = i * 3;
       for (let t = 0; t < STAR_TRAIL_LENGTH; t++) {
@@ -864,19 +906,22 @@ function BlackHole({
         starTrailColors.current[trailIdx * 3 + 2] = starColors[i3 + 2];
       }
     }
-  }, [starPositions, starColors]);
+  }
 
   // Particle orbital binding state - tracks which gravitational source each particle orbits
-  const particleOrbitSource = useRef<Int32Array>(new Int32Array(8000)); // -1 = black hole, 0-8 = star index
-  const particleOrbitTransition = useRef<Float32Array>(new Float32Array(8000)); // Smooth transition factor
+  const particleOrbitSource = useRef<Int32Array | null>(null);
+  const particleOrbitTransition = useRef<Float32Array | null>(null);
 
   // Initialize all particles to orbit black hole
-  useMemo(() => {
+  if (!particleOrbitSource.current) {
+    particleOrbitSource.current = new Int32Array(8000);
+    particleOrbitTransition.current = new Float32Array(8000);
+
     for (let i = 0; i < 8000; i++) {
-      particleOrbitSource.current[i] = -1; // Start orbiting black hole
+      particleOrbitSource.current[i] = -1;
       particleOrbitTransition.current[i] = 0.0;
     }
-  }, []);
+  }
 
   // Animate 3D accretion disk with full physics simulation
   useFrame((state) => {
@@ -908,7 +953,6 @@ function BlackHole({
       const y = starPositions[i3 + 1];
       const z = starPositions[i3 + 2];
 
-      const radius = Math.sqrt(x * x + y * y);
       const distToCenter = Math.sqrt(x * x + y * y + z * z);
 
       // Gravitational attraction from black hole
@@ -947,27 +991,29 @@ function BlackHole({
       star.radius = Math.sqrt(starPositions[i3] * starPositions[i3] + starPositions[i3 + 1] * starPositions[i3 + 1]);
 
       // UPDATE STAR TRAILS
-      // Shift trail positions (oldest gets discarded)
-      for (let t = STAR_TRAIL_LENGTH - 1; t > 0; t--) {
-        const trailIdx = i * STAR_TRAIL_LENGTH + t;
-        const prevIdx = i * STAR_TRAIL_LENGTH + (t - 1);
+      if (starTrailPositions.current && starTrailAges.current) {
+        // Shift trail positions (oldest gets discarded)
+        for (let t = STAR_TRAIL_LENGTH - 1; t > 0; t--) {
+          const trailIdx = i * STAR_TRAIL_LENGTH + t;
+          const prevIdx = i * STAR_TRAIL_LENGTH + (t - 1);
 
-        starTrailPositions.current[trailIdx * 3] = starTrailPositions.current[prevIdx * 3];
-        starTrailPositions.current[trailIdx * 3 + 1] = starTrailPositions.current[prevIdx * 3 + 1];
-        starTrailPositions.current[trailIdx * 3 + 2] = starTrailPositions.current[prevIdx * 3 + 2];
-        starTrailAges.current[trailIdx] = t / STAR_TRAIL_LENGTH;
+          starTrailPositions.current[trailIdx * 3] = starTrailPositions.current[prevIdx * 3];
+          starTrailPositions.current[trailIdx * 3 + 1] = starTrailPositions.current[prevIdx * 3 + 1];
+          starTrailPositions.current[trailIdx * 3 + 2] = starTrailPositions.current[prevIdx * 3 + 2];
+          starTrailAges.current[trailIdx] = t / STAR_TRAIL_LENGTH;
+        }
+
+        // Set newest trail position to current star position
+        const trailIdx = i * STAR_TRAIL_LENGTH;
+        starTrailPositions.current[trailIdx * 3] = starPositions[i3];
+        starTrailPositions.current[trailIdx * 3 + 1] = starPositions[i3 + 1];
+        starTrailPositions.current[trailIdx * 3 + 2] = starPositions[i3 + 2];
+        starTrailAges.current[trailIdx] = 0;
       }
-
-      // Set newest trail position to current star position
-      const trailIdx = i * STAR_TRAIL_LENGTH;
-      starTrailPositions.current[trailIdx * 3] = starPositions[i3];
-      starTrailPositions.current[trailIdx * 3 + 1] = starPositions[i3 + 1];
-      starTrailPositions.current[trailIdx * 3 + 2] = starPositions[i3 + 2];
-      starTrailAges.current[trailIdx] = 0;
     }
 
     // Main 3D volumetric accretion disk with complex physics
-    if (accretionDiskRef.current) {
+    if (accretionDiskRef.current && particleOrbitSource.current && particleOrbitTransition.current) {
       const posAttr = accretionDiskRef.current.geometry.attributes.position;
       const positions = posAttr.array as Float32Array;
       const vels = diskVelocities.current;
@@ -2305,9 +2351,9 @@ function BlackHole({
   // Star trail geometry - orbital paths of stars
   const starTrailGeometry = useMemo(() => {
     const geom = new THREE.BufferGeometry();
-    geom.setAttribute('position', new THREE.BufferAttribute(starTrailPositions.current, 3));
-    geom.setAttribute('age', new THREE.BufferAttribute(starTrailAges.current, 1));
-    geom.setAttribute('color', new THREE.BufferAttribute(starTrailColors.current, 3));
+    geom.setAttribute('position', new THREE.BufferAttribute(starTrailPositions.current!, 3));
+    geom.setAttribute('age', new THREE.BufferAttribute(starTrailAges.current!, 1));
+    geom.setAttribute('color', new THREE.BufferAttribute(starTrailColors.current!, 3));
     return geom;
   }, []);
 
@@ -2564,7 +2610,7 @@ function BlackHole({
   );
 }
 
-function NebulaCloud({ theme: _theme = 'dark' }: { theme?: 'light' | 'dark' }) {
+function NebulaCloud() {
   const meshRef = useRef<THREE.Mesh>(null);
 
   useFrame((state) => {
@@ -2647,7 +2693,7 @@ function CameraController({
   cameraPreset: { position: [number, number, number]; target: [number, number, number] } | null;
   theme?: 'light' | 'dark';
 }) {
-  const controlsRef = useRef<any>(null);
+  const controlsRef = useRef<OrbitControlsType>(null!);
   const { camera } = useThree();
 
   // Apply camera preset with smooth transition
@@ -2792,11 +2838,11 @@ export const ThreeJsHero: React.FC = () => {
             enableGravitationalLensing={enableLensing}
             theme={theme}
           />
-          <StarField theme={theme} />
+          <StarField />
           {enableVisualEffects && (
             <>
               <ShootingStarTrail theme={theme} />
-              <NebulaCloud theme={theme} />
+              <NebulaCloud />
             </>
           )}
         </Canvas>
