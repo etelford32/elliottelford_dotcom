@@ -17,6 +17,46 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Points, PointMaterial, Line, OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import type { OrbitControls as OrbitControlsType } from 'three-stdlib';
+import {
+  EffectComposer,
+  Bloom,
+  ChromaticAberration,
+  DepthOfField,
+  ToneMapping,
+  Vignette,
+} from '@react-three/postprocessing';
+import { BlendFunction, ToneMappingMode } from 'postprocessing';
+
+// Performance Monitor Component
+function PerformanceMonitor({ onFpsUpdate }: { onFpsUpdate: (fps: number) => void }) {
+  const frameTimesRef = useRef<number[]>([]);
+  const lastTimeRef = useRef(performance.now());
+  const frameCountRef = useRef(0);
+
+  useFrame(() => {
+    const currentTime = performance.now();
+    const delta = currentTime - lastTimeRef.current;
+    lastTimeRef.current = currentTime;
+
+    // Calculate FPS
+    const currentFps = 1000 / delta;
+    frameTimesRef.current.push(currentFps);
+
+    // Keep only last 60 frames for averaging
+    if (frameTimesRef.current.length > 60) {
+      frameTimesRef.current.shift();
+    }
+
+    // Update FPS display every 30 frames (reduce update frequency)
+    frameCountRef.current++;
+    if (frameCountRef.current % 30 === 0) {
+      const avgFps = frameTimesRef.current.reduce((a, b) => a + b, 0) / frameTimesRef.current.length;
+      onFpsUpdate(Math.round(avgFps));
+    }
+  });
+
+  return null; // No visual output, just state updates
+}
 
 function StarField() {
   const ref = useRef<THREE.Points>(null);
@@ -2784,6 +2824,16 @@ export const ThreeJsHero: React.FC = () => {
   // Visual effects toggle for performance
   const [enableVisualEffects, setEnableVisualEffects] = useState(true);
 
+  // Post-processing effects (Phase 2)
+  const [enablePostProcessing, setEnablePostProcessing] = useState(true);
+  const [enableBloom, setEnableBloom] = useState(true);
+  const [enableDepthOfField, setEnableDepthOfField] = useState(false); // Off by default for performance
+  const [enableChromaticAberration, setEnableChromaticAberration] = useState(true);
+
+  // Performance monitoring
+  const [showFps, setShowFps] = useState(false);
+  const [currentFps, setCurrentFps] = useState(60);
+
   // Theme system - based on PST time
   const getInitialTheme = () => {
     if (typeof window === 'undefined') return 'dark';
@@ -2876,6 +2926,41 @@ export const ThreeJsHero: React.FC = () => {
               <ShootingStarTrail theme={theme} />
               <NebulaCloud />
             </>
+          )}
+
+          {/* Performance Monitor */}
+          {showFps && <PerformanceMonitor onFpsUpdate={setCurrentFps} />}
+
+          {/* Post-Processing Effects (Phase 2) */}
+          {enablePostProcessing && (
+            <EffectComposer multisampling={0}>
+              {/* Bloom - Dramatic glow effect (controlled via intensity) */}
+              <Bloom
+                intensity={enableBloom ? (theme === 'dark' ? 2.0 : 1.2) : 0}
+                luminanceThreshold={theme === 'dark' ? 0.3 : 0.5}
+                luminanceSmoothing={0.9}
+                radius={0.85}
+                mipmapBlur
+              />
+
+              {/* Chromatic Aberration - Color fringing for sci-fi look (controlled via offset) */}
+              <ChromaticAberration
+                offset={enableChromaticAberration ? ([0.0015, 0.0015] as [number, number]) : ([0, 0] as [number, number])}
+                radialModulation={false}
+                modulationOffset={0}
+              />
+
+              {/* Tone Mapping - Enhance color and contrast (always on) */}
+              <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+
+              {/* Vignette - Subtle edge darkening (always on) */}
+              <Vignette
+                offset={0.3}
+                darkness={theme === 'dark' ? 0.5 : 0.3}
+                eskil={false}
+                blendFunction={BlendFunction.NORMAL}
+              />
+            </EffectComposer>
           )}
         </Canvas>
       </div>
@@ -3075,6 +3160,76 @@ export const ThreeJsHero: React.FC = () => {
             </div>
           </div>
 
+          {/* Post-Processing Effects (Phase 2) */}
+          <div className="space-y-3 pt-3 border-t border-accent/20">
+            <h4 className="text-xs text-foreground/60 uppercase tracking-wider font-semibold">🎬 Cinematic Effects</h4>
+            <button
+              onClick={() => setEnablePostProcessing(!enablePostProcessing)}
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                setEnablePostProcessing(!enablePostProcessing);
+              }}
+              className={`w-full px-3 py-2.5 border rounded-lg text-xs font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer touch-manipulation ${
+                enablePostProcessing
+                  ? 'bg-accent/30 border-accent text-accent hover:bg-accent/40'
+                  : 'bg-primary/60 border-accent/30 text-foreground hover:bg-accent/20 hover:text-accent'
+              }`}
+              title="Master toggle for all post-processing effects"
+            >
+              {enablePostProcessing ? '✓ Post-Processing' : '○ Post-Processing'}
+            </button>
+
+            {enablePostProcessing && (
+              <>
+                <button
+                  onClick={() => setEnableBloom(!enableBloom)}
+                  onTouchEnd={(e) => {
+                    e.preventDefault();
+                    setEnableBloom(!enableBloom);
+                  }}
+                  className={`w-full px-3 py-2.5 border rounded-lg text-xs font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer touch-manipulation ${
+                    enableBloom
+                      ? 'bg-secondary/30 border-secondary text-secondary hover:bg-secondary/40'
+                      : 'bg-primary/60 border-secondary/30 text-foreground hover:bg-secondary/20 hover:text-secondary'
+                  }`}
+                  title="HDR bloom for dramatic glow (-3 FPS)"
+                >
+                  {enableBloom ? '✓ Bloom Glow' : '○ Bloom Glow'}
+                </button>
+
+                <button
+                  onClick={() => setEnableChromaticAberration(!enableChromaticAberration)}
+                  onTouchEnd={(e) => {
+                    e.preventDefault();
+                    setEnableChromaticAberration(!enableChromaticAberration);
+                  }}
+                  className={`w-full px-3 py-2.5 border rounded-lg text-xs font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer touch-manipulation ${
+                    enableChromaticAberration
+                      ? 'bg-secondary/30 border-secondary text-secondary hover:bg-secondary/40'
+                      : 'bg-primary/60 border-secondary/30 text-foreground hover:bg-secondary/20 hover:text-secondary'
+                  }`}
+                  title="Lens color fringing for sci-fi aesthetic (-1 FPS)"
+                >
+                  {enableChromaticAberration ? '✓ Chromatic Aberration' : '○ Chromatic Aberration'}
+                </button>
+
+                <button
+                  disabled
+                  className="w-full px-3 py-2.5 border rounded-lg text-xs font-semibold cursor-not-allowed opacity-50 bg-primary/40 border-foreground/20 text-foreground/50"
+                  title="Depth of Field - Coming soon! (High performance cost)"
+                >
+                  ○ Depth of Field (Soon)
+                </button>
+              </>
+            )}
+
+            <div className="text-xs text-foreground/50">
+              <p className="leading-relaxed">
+                Film-grade effects: Bloom, color grading, vignette, tone mapping • FPS impact: -8 to -12
+              </p>
+            </div>
+          </div>
+
           {/* Mouse Controls Guide */}
           <div className="space-y-2 pt-3 border-t border-accent/20">
             <h4 className="text-xs text-foreground/60 uppercase tracking-wider font-semibold">Mouse Controls</h4>
@@ -3136,6 +3291,51 @@ export const ThreeJsHero: React.FC = () => {
         {!showControls && (
           <div className="absolute bottom-6 left-6 bg-primary/80 backdrop-blur-md border border-accent/30 rounded-lg px-4 py-2 font-mono text-xs text-foreground/70 pointer-events-none shadow-lg max-w-xs animate-in fade-in slide-in-from-bottom-5 duration-500 delay-1000">
             <span className="text-accent">💡 Tip:</span> Drag to rotate • Right-click to pan • Scroll to zoom
+          </div>
+        )}
+
+        {/* FPS Monitor Toggle - Top Right */}
+        <button
+          onClick={() => setShowFps(!showFps)}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            setShowFps(!showFps);
+          }}
+          className="absolute top-6 right-6 bg-primary/95 backdrop-blur-md border border-secondary/40 rounded-lg px-4 py-2.5 font-mono text-sm text-secondary hover:bg-secondary/30 hover:scale-105 transition-all shadow-lg pointer-events-auto flex items-center gap-2 font-semibold animate-in fade-in slide-in-from-right-5 duration-300 cursor-pointer touch-manipulation"
+          title="Toggle performance monitor"
+        >
+          <span>📊</span>
+          {showFps && <span className="text-foreground">{currentFps} FPS</span>}
+        </button>
+
+        {/* FPS Performance Panel - Expanded Info */}
+        {showFps && (
+          <div className="absolute top-20 right-6 bg-primary/95 backdrop-blur-md border border-secondary/40 rounded-xl p-4 space-y-3 font-mono text-xs pointer-events-auto shadow-2xl animate-in fade-in slide-in-from-right-5 duration-300">
+            <div className="flex items-center justify-between gap-6 pb-2 border-b border-secondary/20">
+              <h4 className="text-secondary font-semibold uppercase tracking-wider">Performance</h4>
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${currentFps >= 55 ? 'bg-green-500' : currentFps >= 30 ? 'bg-yellow-500' : 'bg-red-500'} animate-pulse`} />
+                <span className="text-foreground font-bold text-lg">{currentFps}</span>
+                <span className="text-foreground/60">FPS</span>
+              </div>
+            </div>
+
+            <div className="space-y-2 text-foreground/70">
+              <div className="flex justify-between">
+                <span>Status:</span>
+                <span className={`font-semibold ${currentFps >= 55 ? 'text-green-500' : currentFps >= 30 ? 'text-yellow-500' : 'text-red-500'}`}>
+                  {currentFps >= 55 ? 'Excellent' : currentFps >= 30 ? 'Good' : 'Low'}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Frame Time:</span>
+                <span className="font-semibold text-foreground">{(1000 / currentFps).toFixed(1)}ms</span>
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-secondary/20 text-foreground/50 text-[10px] leading-relaxed">
+              Tip: Disable post-processing or ambient effects for better performance on low-end devices.
+            </div>
           </div>
         )}
       </div>
